@@ -1,0 +1,6 @@
+@PetClinix.Api_HostAddress = http://localhost:5180
+
+GET {{PetClinix.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

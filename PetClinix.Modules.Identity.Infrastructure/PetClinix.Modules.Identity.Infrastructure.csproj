@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PetClinix.Modules.Identity.Application\PetClinix.Modules.Identity.Application.csproj" />
+    <ProjectReference Include="..\PetClinix.Modules.Identity.Domain\PetClinix.Modules.Identity.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
