@@ -11,4 +11,8 @@
     <ProjectReference Include="..\PetClinix.Modules.Identity.Domain\PetClinix.Modules.Identity.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="8.3.0" />
+  </ItemGroup>
+
 </Project>
