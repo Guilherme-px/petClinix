@@ -6,6 +6,7 @@ using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
 
 namespace PetClinix.Modules.Identity.Application.UseCases.RegisterClinicWithAdmin;
+
 public sealed class RegisterClinicWithAdminCommandHandler
     : ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>>
 {
@@ -61,10 +62,13 @@ public sealed class RegisterClinicWithAdminCommandHandler
                 slug, 
                 command.Email,
                 command.PhoneNumber,
-                command.AddressLine,
+                command.ZipCode,
+                command.Street,
+                command.Number,
+                command.Neighborhood,
+                command.Complement,
                 command.City,
-                command.State,
-                command.ZipCode);
+                command.State);
 
             var passwordHash = _passwordHasher.Hash(command.Password);
 
@@ -72,7 +76,10 @@ public sealed class RegisterClinicWithAdminCommandHandler
                 clinic.Id,
                 command.AdminName,
                 command.AdminEmail,
-                passwordHash);
+                passwordHash,
+                command.AdminDocumentNumber,
+                command.AdminPhoneNumber,
+                command.AdminBirthDate);
 
             await _clinicRepository.AddAsync(clinic, cancellationToken);
             await _userRepository.AddAsync(adminUser, cancellationToken);
