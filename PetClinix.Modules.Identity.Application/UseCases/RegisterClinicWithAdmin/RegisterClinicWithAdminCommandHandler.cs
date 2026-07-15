@@ -6,7 +6,6 @@ using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
 
 namespace PetClinix.Modules.Identity.Application.UseCases.RegisterClinicWithAdmin;
-
 public sealed class RegisterClinicWithAdminCommandHandler
     : ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>>
 {
@@ -30,7 +29,7 @@ public sealed class RegisterClinicWithAdminCommandHandler
     {
         try
         {
-            var slug = ClinicSlug.Create(command.Slug);
+            var slug = ClinicSlug.CreateFromName(command.TradeName);
             var clinicEmail = Email.Create(command.Email);
             var adminEmail = Email.Create(command.AdminEmail);
 
@@ -38,7 +37,7 @@ public sealed class RegisterClinicWithAdminCommandHandler
             {
                 return Result<RegisterClinicWithAdminResponse>.Failure(
                     "identity.clinic.slug_already_exists",
-                    "Já existe uma clínica com esse identificador.");
+                    "Já existe uma clínica com esse nome/identificador.");
             }
 
             if (await _clinicRepository.ExistsByEmailAsync(clinicEmail, cancellationToken))
@@ -59,7 +58,7 @@ public sealed class RegisterClinicWithAdminCommandHandler
                 command.TradeName,
                 command.LegalName,
                 command.DocumentNumber,
-                command.Slug,
+                slug, 
                 command.Email,
                 command.PhoneNumber,
                 command.AddressLine,

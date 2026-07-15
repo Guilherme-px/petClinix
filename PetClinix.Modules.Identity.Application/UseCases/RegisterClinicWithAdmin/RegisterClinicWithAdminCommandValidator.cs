@@ -18,11 +18,6 @@ public sealed class RegisterClinicWithAdminCommandValidator : AbstractValidator<
             .MaximumLength(30).WithMessage("O documento da clínica deve ter no máximo 30 caracteres.")
             .When(x => !string.IsNullOrWhiteSpace(x.DocumentNumber));
 
-        RuleFor(x => x.Slug)
-            .NotEmpty().WithMessage("O identificador da clínica é obrigatório.")
-            .MinimumLength(3).WithMessage("O identificador da clínica deve ter no mínimo 3 caracteres.")
-            .MaximumLength(50).WithMessage("O identificador da clínica deve ter no máximo 50 caracteres.");
-
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("O e-mail da clínica é obrigatório.")
             .MaximumLength(256).WithMessage("O e-mail da clínica deve ter no máximo 256 caracteres.");

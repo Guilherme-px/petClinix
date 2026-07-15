@@ -7,7 +7,6 @@ public sealed class RegisterClinicWithAdminCommand : ICommand<Result<RegisterCli
     public string TradeName { get; init; } = string.Empty;
     public string? LegalName { get; init; }
     public string? DocumentNumber { get; init; }
-    public string Slug { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public string PhoneNumber { get; init; } = string.Empty;
     public string? AddressLine { get; init; }

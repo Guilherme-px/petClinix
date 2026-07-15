@@ -56,7 +56,7 @@ public sealed class Clinic : AggregateRoot
         string tradeName,
         string? legalName,
         string? documentNumber,
-        string slug,
+        ClinicSlug slug,
         string email,
         string phoneNumber,
         string? addressLine = null,
