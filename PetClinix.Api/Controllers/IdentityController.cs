@@ -5,7 +5,7 @@ using PetClinix.Modules.Identity.Application.UseCases.RegisterClinicWithAdmin;
 namespace PetClinix.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/clinics")]
 public class IdentityController : ControllerBase
 {
     private readonly ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>> _handler;
@@ -15,7 +15,7 @@ public class IdentityController : ControllerBase
         _handler = handler;
     }
 
-    [HttpPost("register-clinic")]
+    [HttpPost]
     public async Task<IActionResult> RegisterClinic([FromBody] RegisterClinicRequest request, CancellationToken cancellationToken)
     {
         var command = new RegisterClinicWithAdminCommand
@@ -46,7 +46,7 @@ public class IdentityController : ControllerBase
             return BadRequest(new { result.ErrorCode, result.ErrorMessage });
         }
 
-        return CreatedAtAction(nameof(RegisterClinic), new { id = result.Value!.ClinicId }, result.Value);
+        return Created("api/clinics", result.Value);
     }
 }
 
