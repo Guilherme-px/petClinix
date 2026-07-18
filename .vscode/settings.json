@@ -6,6 +6,7 @@
         "hífens",
         "rsuser",
         "userosscache",
-        "zipcode"
+        "zipcode",
+        "UseNpgsql"
     ]
 }
