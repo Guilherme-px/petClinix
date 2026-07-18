@@ -70,13 +70,11 @@ public sealed class RegisterClinicWithAdminCommandHandler
                 command.City,
                 command.State);
 
-            var passwordHash = _passwordHasher.Hash(command.Password);
-
             var adminUser = User.CreateAdmin(
                 clinic.Id,
                 command.AdminName,
                 command.AdminEmail,
-                passwordHash,
+                null,
                 command.AdminDocumentNumber,
                 command.AdminPhoneNumber,
                 command.AdminBirthDate);

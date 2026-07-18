@@ -62,11 +62,6 @@ public sealed class RegisterClinicWithAdminCommandValidator : AbstractValidator<
             .NotEmpty().WithMessage("O e-mail do administrador é obrigatório.")
             .MaximumLength(256).WithMessage("O e-mail do administrador deve ter no máximo 256 caracteres.");
 
-        RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("A senha é obrigatória.")
-            .MinimumLength(8).WithMessage("A senha deve ter no mínimo 8 caracteres.")
-            .MaximumLength(100).WithMessage("A senha deve ter no máximo 100 caracteres.");
-
         RuleFor(x => x.AdminDocumentNumber)
             .NotEmpty().WithMessage("O CPF do administrador é obrigatório.")
             .MaximumLength(20).WithMessage("O CPF deve ter no máximo 20 caracteres.");

@@ -14,14 +14,13 @@ public sealed class RegisterClinicWithAdminCommand : ICommand<Result<RegisterCli
     public string Street { get; init; } = string.Empty;
     public string Number { get; init; } = string.Empty;
     public string Neighborhood { get; init; } = string.Empty;
-    public string? Complement { get; init; } // Único opcional
+    public string? Complement { get; init; }
     public string City { get; init; } = string.Empty;
     public string State { get; init; } = string.Empty;
 
     public string AdminName { get; init; } = string.Empty;
     public string AdminEmail { get; init; } = string.Empty;
-    public string Password { get; init; } = string.Empty;
-    public string AdminDocumentNumber { get; init; } = string.Empty; // CPF
+    public string AdminDocumentNumber { get; init; } = string.Empty; 
     public string AdminPhoneNumber { get; init; } = string.Empty;
     public DateOnly AdminBirthDate { get; init; }
 }

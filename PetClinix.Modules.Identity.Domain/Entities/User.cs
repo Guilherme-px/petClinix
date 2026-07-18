@@ -13,21 +13,19 @@ public sealed class User : AggregateRoot
     public string DocumentNumber { get; private set; }
     public PhoneNumber PhoneNumber { get; private set; }
     public DateOnly BirthDate { get; private set; }
-    public string PasswordHash { get; private set; }
+    public string? PasswordHash { get; private set; }
     public UserRole Role { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
 
     private User(
-        Guid clinicId, string name, Email email, string passwordHash,
+        Guid clinicId, string name, Email email, string? passwordHash,
         string documentNumber, PhoneNumber phoneNumber, DateOnly birthDate, UserRole role)
     {
         if (clinicId == Guid.Empty)
             throw new IdentityDomainException("identity.user.clinic_id_required", "A clínica do usuário é obrigatória.");
         if (string.IsNullOrWhiteSpace(name))
             throw new IdentityDomainException("identity.user.name_required", "O nome do usuário é obrigatório.");
-        if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new IdentityDomainException("identity.user.password_hash_required", "A senha do usuário é obrigatória.");
         if (string.IsNullOrWhiteSpace(documentNumber))
             throw new IdentityDomainException("identity.user.document_required", "O CPF do usuário é obrigatório.");
 
@@ -45,7 +43,7 @@ public sealed class User : AggregateRoot
     }
 
     public static User CreateAdmin(
-        Guid clinicId, string name, string email, string passwordHash,
+        Guid clinicId, string name, string email, string? passwordHash,
         string documentNumber, string phoneNumber, DateOnly birthDate)
     {
         return new User(
@@ -57,7 +55,7 @@ public sealed class User : AggregateRoot
         Guid clinicId,
         string name,
         string email,
-        string passwordHash,
+        string? passwordHash,
         string documentNumber,
         string phoneNumber,
         DateOnly birthDate,

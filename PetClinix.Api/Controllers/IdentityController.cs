@@ -34,7 +34,6 @@ public class IdentityController : ControllerBase
             State = request.State,
             AdminName = request.AdminName,
             AdminEmail = request.AdminEmail,
-            Password = request.Password,
             AdminDocumentNumber = request.AdminDocumentNumber,
             AdminPhoneNumber = request.AdminPhoneNumber,
             AdminBirthDate = request.AdminBirthDate

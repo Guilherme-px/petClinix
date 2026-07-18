@@ -44,7 +44,7 @@ public class IdentityDbContext : DbContext
             entity.Property(u => u.PhoneNumber).HasConversion(p => p.Value, v => Domain.ValueObjects.PhoneNumber.Create(v));
             
             entity.Property(u => u.Name).HasMaxLength(150).IsRequired();
-            entity.Property(u => u.DocumentNumber).HasMaxLength(20).IsRequired(); // CPF
+            entity.Property(u => u.DocumentNumber).HasMaxLength(20).IsRequired();
             entity.Property(u => u.PasswordHash).HasMaxLength(255).IsRequired();
             entity.Property(u => u.BirthDate).IsRequired();
             
