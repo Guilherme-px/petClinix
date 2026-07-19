@@ -81,4 +81,35 @@ public class RegisterClinicWithAdminCommandHandlerTests
         await _clinicRepositoryMock.Received(1).AddAsync(Arg.Any<Clinic>(), Arg.Any<CancellationToken>());
         await _userRepositoryMock.Received(1).AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task Handle_Should_ReturnFailure_When_ClinicEmailAlreadyExists()
+    {
+        var command = CreateValidCommand();
+
+        _clinicRepositoryMock.ExistsBySlugAsync(Arg.Any<ClinicSlug>(), Arg.Any<CancellationToken>()).Returns(false);
+        _clinicRepositoryMock.ExistsByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.ErrorCode.Should().Be("identity.clinic.email_already_exists");
+        await _clinicRepositoryMock.DidNotReceive().AddAsync(Arg.Any<Clinic>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_Should_ReturnFailure_When_AdminEmailAlreadyExists()
+    {
+        var command = CreateValidCommand();
+
+        _clinicRepositoryMock.ExistsBySlugAsync(Arg.Any<ClinicSlug>(), Arg.Any<CancellationToken>()).Returns(false);
+        _clinicRepositoryMock.ExistsByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(false);
+        _userRepositoryMock.ExistsByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.ErrorCode.Should().Be("identity.user.email_already_exists");
+        await _clinicRepositoryMock.DidNotReceive().AddAsync(Arg.Any<Clinic>(), Arg.Any<CancellationToken>());
+    }
 }
