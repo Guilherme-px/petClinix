@@ -1,6 +1,7 @@
 {
     "dotnet.defaultSolution": "PetClinix.sln",
     "cSpell.words": [
+        "adminpet",
         "Clinix",
         "docstates",
         "hífens",
