@@ -5,8 +5,9 @@
         "docstates",
         "hífens",
         "rsuser",
+        "UseNpgsql",
         "userosscache",
-        "zipcode",
-        "UseNpgsql"
+        "Xunit",
+        "zipcode"
     ]
 }

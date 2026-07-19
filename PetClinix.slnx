@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/PetClinix.UnitTests/PetClinix.UnitTests.csproj" />
+  </Folder>
   <Project Path="PetClinix.Api/PetClinix.Api.csproj" />
   <Project Path="PetClinix.BuildingBlocks.Application/PetClinix.BuildingBlocks.Application.csproj" />
   <Project Path="PetClinix.BuildingBlocks.Domain/PetClinix.BuildingBlocks.Domain.csproj" />
