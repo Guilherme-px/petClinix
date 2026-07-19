@@ -55,5 +55,5 @@ public record RegisterClinicRequest(
     string Email, string PhoneNumber,
     string ZipCode, string Street, string Number, string Neighborhood,
     string? Complement, string City, string State,
-    string AdminName, string AdminEmail, string Password,
+    string AdminName, string AdminEmail,
     string AdminDocumentNumber, string AdminPhoneNumber, DateOnly AdminBirthDate);

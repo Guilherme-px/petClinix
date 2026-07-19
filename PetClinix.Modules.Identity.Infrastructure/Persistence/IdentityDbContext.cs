@@ -45,7 +45,7 @@ public class IdentityDbContext : DbContext
             
             entity.Property(u => u.Name).HasMaxLength(150).IsRequired();
             entity.Property(u => u.DocumentNumber).HasMaxLength(20).IsRequired();
-            entity.Property(u => u.PasswordHash).HasMaxLength(255).IsRequired();
+            entity.Property(u => u.PasswordHash).HasMaxLength(255);
             entity.Property(u => u.BirthDate).IsRequired();
             
             entity.HasIndex(u => u.Email).IsUnique();
