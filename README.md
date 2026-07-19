@@ -1,4 +1,3 @@
-```markdown
 [🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md)
 
 # PetClinix
@@ -107,7 +106,6 @@ tests/
 ├── PetClinix.UnitTests/                        # Fast, isolated tests using NSubstitute and FluentAssertions
 └── PetClinix.IntegrationTests/                 # E2E API tests using WebApplicationFactory and Testcontainers
 ```
-
 ---
 
 ## Tech Stack
@@ -230,4 +228,3 @@ dotnet test tests/PetClinix.IntegrationTests
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```

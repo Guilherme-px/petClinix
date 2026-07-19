@@ -1,12 +1,11 @@
-```markdown
 [🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md)
 
 # PetClinix
 
-PetClinix é um MVP de SaaS multi-tenant para clínicas veterinárias, projetado e implementado como um projeto de portfólio público para demonstrar práticas de engenharia de software de nível sênior, pensamento de produto e tomada de decisão arquitetural.
+PetClinix é um MVP de SaaS multi-tenant para clínicas veterinárias, projetado e implementado como um projeto de portfólio público para demonstrar práticas de engenharia de software de nível sênior, visão de produto e tomada de decisões arquiteturais.
 
-Este repositório representa intencionalmente o **estágio de MVP público** do produto.  
-Seu propósito é展示 os alicerces da plataforma, incluindo modelagem de domínio, arquitetura modular, limites de tenancy e as primeiras capacidades essenciais do negócio.
+Este repositório representa intencionalmente o **estágio público de MVP** do produto.  
+Seu propósito é exibir os alicerces da plataforma, incluindo modelagem de domínio, arquitetura modular, limites de inquilinato e as primeiras capacidades centrais de negócio.
 
 A evolução completa do produto, incluindo recursos avançados, hardening de produção e melhorias de nível comercial, deve continuar em um **repositório privado** após o marco do MVP.
 
@@ -18,11 +17,11 @@ Este projeto foi criado para demonstrar o design e a implementação de um produ
 
 - Clean Architecture
 - Domain-Driven Design (DDD)
-- Design modular
+- Arquitetura modular
 - Pensamento multi-tenant
 - Manutenibilidade
 - Escalabilidade
-- Clara separação de preocupações (separation of concerns)
+- Separação clara de responsabilidades
 - Design de software focado no domínio
 
 Em vez de construir uma aplicação CRUD genérica, o objetivo é modelar um domínio de negócio realista e construir uma base arquitetural sólida que possa suportar o crescimento futuro.
@@ -33,7 +32,7 @@ Em vez de construir uma aplicação CRUD genérica, o objetivo é modelar um dom
 
 O PetClinix visa fornecer às clínicas veterinárias uma plataforma centralizada para gerenciar suas operações diárias, equipe, pets, tutores, agendamentos, assinaturas e fluxos de trabalho clínicos.
 
-A plataforma está sendo projetada como um produto SaaS onde cada clínica opera dentro de seu próprio escopo de dados isolado.
+A plataforma está sendo projetada como um produto SaaS em que cada clínica opera dentro de seu próprio escopo de dados isolado.
 
 No estágio de MVP, o produto foca em validar a base operacional central da plataforma.
 
@@ -230,4 +229,3 @@ dotnet test tests/PetClinix.IntegrationTests
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-```
