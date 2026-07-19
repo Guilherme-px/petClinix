@@ -1,4 +1,3 @@
-```markdown
 [🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md)
 
 # PetClinix
@@ -230,4 +229,3 @@ dotnet test tests/PetClinix.IntegrationTests
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-```
