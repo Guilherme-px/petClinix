@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Identity.Application.Contracts;
 using PetClinix.Modules.Identity.Application.UseCases.RegisterClinicWithAdmin;
-using PetClinix.Modules.Identity.Domain.Repositories; 
+using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Services;
@@ -13,7 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
@@ -37,3 +37,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

@@ -36,3 +36,4 @@ coverage.*
 *.pubxml.user
 .env
 .env.local
+.testcontainers/
