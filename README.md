@@ -1,3 +1,6 @@
+```markdown
+[🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md)
+
 # PetClinix
 
 PetClinix is a multi-tenant SaaS MVP for veterinary clinics, designed and implemented as a public portfolio project to demonstrate senior-level software engineering practices, product thinking, and architectural decision-making.
@@ -67,7 +70,7 @@ Its purpose is to demonstrate:
 - technical direction
 - implementation style
 
-After this MVP reaches a representative and demonstrable state, the project will continue evolving in a **private repository**, where the product can be further refined with:
+After this MVP reaches a representative and demonstrative state, the project will continue evolving in a **private repository**, where the product can be further refined with:
 
 - additional modules
 - production-grade hardening
@@ -93,10 +96,138 @@ The solution follows the principles of:
 ### Current project structure
 
 ```text
-PetClinix.Api
-PetClinix.BuildingBlocks.Application
-PetClinix.BuildingBlocks.Domain
-PetClinix.BuildingBlocks.Infrastructure
-PetClinix.Modules.Identity.Application
-PetClinix.Modules.Identity.Domain
-PetClinix.Modules.Identity.Infrastructure
+├── PetClinix.Api/                              # Presentation layer (Controllers, Middleware, DI)
+├── PetClinix.BuildingBlocks.Application/       # Base contracts (CQRS interfaces, Result pattern)
+├── PetClinix.BuildingBlocks.Domain/            # Base domain contracts (Entity, AggregateRoot, DomainEvents)
+├── PetClinix.BuildingBlocks.Infrastructure/    # Base infrastructure contracts
+├── PetClinix.Modules.Identity.Application/     # Identity use cases (Commands, Handlers, Validators)
+├── PetClinix.Modules.Identity.Domain/          # Identity business logic (Entities, Value Objects)
+└── PetClinix.Modules.Identity.Infrastructure/  # Identity persistence (EF Core, Repositories)
+tests/
+├── PetClinix.UnitTests/                        # Fast, isolated tests using NSubstitute and FluentAssertions
+└── PetClinix.IntegrationTests/                 # E2E API tests using WebApplicationFactory and Testcontainers
+```
+
+---
+
+## Tech Stack
+
+- **Framework:** .NET 10 (Preview)
+- **Architecture:** Modular Monolith, Clean Architecture, DDD
+- **Database:** PostgreSQL
+- **ORM:** Entity Framework Core 9
+- **Validation:** FluentValidation
+- **Testing:** xUnit, NSubstitute, FluentAssertions, Testcontainers
+- **API Documentation:** Swagger / OpenAPI
+
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your machine:
+
+1. **.NET 10 SDK (Preview)**
+   - Required to build and run the application.
+   - Download: [https://dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0)
+
+2. **PostgreSQL**
+   - Required to run the application database locally.
+   - You can install it natively or run it via Docker:
+     ```bash
+     docker run --name petclinix-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16-alpine
+     ```
+
+3. **Docker**
+   - **Strictly required to run the Integration Tests.** The integration tests use `Testcontainers` to spin up a real, ephemeral PostgreSQL database inside a Docker container automatically.
+   - Download: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+
+4. **Entity Framework Core Tools**
+   - Required to create and apply database migrations.
+   - Install globally by running:
+     ```bash
+     dotnet tool install --global dotnet-ef
+     ```
+
+---
+
+## Getting Started
+
+Follow these steps to set up and run the project locally.
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/PetClinix.git
+cd PetClinix
+```
+
+### 2. Configure the Database Connection
+The application uses a layered configuration approach. The base template is in `appsettings.json`, but your local credentials should be placed in `appsettings.Development.json` (which is ignored by Git).
+
+Create the file `PetClinix.Api/appsettings.Development.json` and add your connection string:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=postgres;Password=your_password_here"
+  }
+}
+```
+
+### 3. Apply Database Migrations
+To create the database schema, run the following command from the root directory:
+
+```bash
+dotnet ef database update --project PetClinix.Modules.Identity.Infrastructure --startup-project PetClinix.Api
+```
+
+### 4. Run the Application
+```bash
+dotnet run --project PetClinix.Api
+```
+Once running, open your browser and navigate to the Swagger UI to test the API endpoints:
+- **Swagger UI:** `http://localhost:<port>/swagger` (check your terminal output for the exact port, usually `5180` or `5000`).
+
+---
+
+## Testing
+
+The project contains a comprehensive test suite divided into Unit Tests and Integration Tests.
+
+### Run All Tests
+To run the entire test suite. **Note: Docker must be running** for the integration tests to execute successfully:
+```bash
+dotnet test
+```
+
+### Run Unit Tests Only
+Unit tests are fast and do not require external dependencies like databases or Docker.
+```bash
+dotnet test tests/PetClinix.UnitTests
+```
+
+### Run Integration Tests Only
+Integration tests validate the API from the HTTP request down to the PostgreSQL database. **They require Docker to be running**.
+```bash
+dotnet test tests/PetClinix.IntegrationTests
+```
+
+---
+
+## Roadmap
+
+- [x] Clinic Onboarding & Registration (Multi-tenant foundation)
+- [x] Domain validation & Value Objects
+- [x] PostgreSQL integration with EF Core
+- [ ] Stripe subscription checkout flow
+- [ ] Webhook handling for payment success
+- [ ] Identity module: Password definition & Login (JWT)
+- [ ] Employee management module
+- [ ] Pet & Tutor registration module
+- [ ] Scheduling and clinical workflows
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```
