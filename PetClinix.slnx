@@ -7,6 +7,9 @@
   <Project Path="PetClinix.BuildingBlocks.Application/PetClinix.BuildingBlocks.Application.csproj" />
   <Project Path="PetClinix.BuildingBlocks.Domain/PetClinix.BuildingBlocks.Domain.csproj" />
   <Project Path="PetClinix.BuildingBlocks.Infrastructure/PetClinix.BuildingBlocks.Infrastructure.csproj" />
+  <Project Path="PetClinix.Modules.Billing.Application/PetClinix.Modules.Billing.Application.csproj" />
+  <Project Path="PetClinix.Modules.Billing.Domain/PetClinix.Modules.Billing.Domain.csproj" />
+  <Project Path="PetClinix.Modules.Billing.Infrastructure/PetClinix.Modules.Billing.Infrastructure.csproj" />
   <Project Path="PetClinix.Modules.Identity.Application/PetClinix.Modules.Identity.Application.csproj" />
   <Project Path="PetClinix.Modules.Identity.Domain/PetClinix.Modules.Identity.Domain.csproj" />
   <Project Path="PetClinix.Modules.Identity.Infrastructure/PetClinix.Modules.Identity.Infrastructure.csproj" />

@@ -19,6 +19,8 @@
   <ItemGroup>
     <ProjectReference Include="..\PetClinix.Modules.Identity.Application\PetClinix.Modules.Identity.Application.csproj" />
     <ProjectReference Include="..\PetClinix.Modules.Identity.Infrastructure\PetClinix.Modules.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\PetClinix.Modules.Billing.Application\PetClinix.Modules.Billing.Application.csproj" />
+    <ProjectReference Include="..\PetClinix.Modules.Billing.Infrastructure\PetClinix.Modules.Billing.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
