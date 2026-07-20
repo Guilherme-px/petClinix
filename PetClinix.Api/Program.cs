@@ -6,6 +6,9 @@ using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Services;
+using PetClinix.Modules.Billing.Application.Contracts;
+using PetClinix.Modules.Billing.Application.UseCases.CreateCheckoutSession;
+using PetClinix.Modules.Billing.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +26,9 @@ builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>>, RegisterClinicWithAdminCommandHandler>();
+
+builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<CreateCheckoutSessionResponse>>, CreateCheckoutSessionCommandHandler>();
 
 var app = builder.Build();
 
