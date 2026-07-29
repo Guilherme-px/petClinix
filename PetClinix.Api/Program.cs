@@ -9,6 +9,9 @@ using PetClinix.Modules.Identity.Infrastructure.Services;
 using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Application.UseCases.CreateCheckoutSession;
 using PetClinix.Modules.Billing.Infrastructure.Services;
+using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Infrastructure.Persistence;
+using PetClinix.Modules.Billing.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,13 +25,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddDbContext<BillingDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>>, RegisterClinicWithAdminCommandHandler>();
-
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<CreateCheckoutSessionResponse>>, CreateCheckoutSessionCommandHandler>();
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
 var app = builder.Build();
 
