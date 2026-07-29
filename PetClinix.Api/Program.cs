@@ -8,6 +8,7 @@ using PetClinix.Modules.Identity.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Services;
 using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Application.UseCases.CreateCheckoutSession;
+using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Infrastructure.Services;
 using PetClinix.Modules.Billing.Domain.Interfaces;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
@@ -35,6 +36,7 @@ builder.Services.AddScoped<ICommandHandler<RegisterClinicWithAdminCommand, Resul
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<CreateCheckoutSessionResponse>>, CreateCheckoutSessionCommandHandler>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+builder.Services.AddScoped<ICommandHandler<ActivateSubscriptionCommand, Result>, ActivateSubscriptionCommandHandler>();
 
 var app = builder.Build();
 

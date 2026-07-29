@@ -216,8 +216,8 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Clinic Onboarding & Registration (Multi-tenant foundation)
 - [x] Domain validation & Value Objects
 - [x] PostgreSQL integration with EF Core
-- [ ] Stripe subscription checkout flow
-- [ ] Webhook handling for payment success
+- [x] Stripe subscription checkout flow
+- [x] Webhook handling for payment success
 - [ ] Identity module: Password definition & Login (JWT)
 - [ ] Employee management module
 - [ ] Pet & Tutor registration module

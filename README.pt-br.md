@@ -217,8 +217,8 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Onboarding e Cadastro de Clínicas (Fundação multi-tenant)
 - [x] Validação de Domínio e Value Objects
 - [x] Integração com PostgreSQL usando EF Core
-- [ ] Fluxo de checkout de assinatura via Stripe
-- [ ] Tratamento de Webhook para sucesso de pagamento
+- [x] Fluxo de checkout de assinatura via Stripe
+- [x] Tratamento de Webhook para sucesso de pagamento
 - [ ] Módulo de Identidade: Definição de Senha e Login (JWT)
 - [ ] Módulo de gerenciamento de funcionários
 - [ ] Módulo de cadastro de Pets e Tutores
