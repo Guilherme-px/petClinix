@@ -21,6 +21,7 @@ public class BillingController : ControllerBase
         var command = new CreateCheckoutSessionCommand(
             request.ClinicId,
             request.PriceId,
+            request.AdminEmail,
             request.SuccessUrl,
             request.CancelUrl);
 
@@ -35,4 +36,4 @@ public class BillingController : ControllerBase
     }
 }
 
-public record CreateCheckoutSessionRequest(Guid ClinicId, string PriceId, string SuccessUrl, string CancelUrl);
+public record CreateCheckoutSessionRequest(Guid ClinicId, string PriceId, string AdminEmail, string SuccessUrl, string CancelUrl);

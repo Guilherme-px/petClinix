@@ -25,6 +25,7 @@ public class StripeService : IStripeService
         {
             Mode = "subscription",
             ClientReferenceId = command.ClinicId.ToString(),
+            CustomerEmail = command.AdminEmail,
             LineItems = new List<SessionLineItemOptions>
             {
                 new SessionLineItemOptions
