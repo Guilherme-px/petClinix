@@ -10,4 +10,5 @@ public interface IUserRepository
     Task<User?> GetByPasswordResetTokenAsync(string token, CancellationToken cancellationToken = default);
     Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
+    Task<User?> GetByRefreshTokenAsync(string token, CancellationToken cancellationToken = default);
 }

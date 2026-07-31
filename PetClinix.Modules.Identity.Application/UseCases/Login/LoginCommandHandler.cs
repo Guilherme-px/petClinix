@@ -44,7 +44,10 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<L
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);
+        var refreshToken = user.GenerateRefreshToken();
 
-        return Result<LoginResponse>.Success(new LoginResponse(token, user.Email.Value, user.Role.ToString()));
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
+        return Result<LoginResponse>.Success(new LoginResponse(token, refreshToken, user.Email.Value, user.Role.ToString()));
     }
 }

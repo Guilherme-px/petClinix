@@ -19,6 +19,8 @@ public sealed class User : AggregateRoot
     public DateTime CreatedAtUtc { get; private set; }
     public string? PasswordResetToken { get; private set; }
     public DateTime? PasswordResetTokenExpiresAtUtc { get; private set; }
+    public string? RefreshToken { get; private set; }
+    public DateTime? RefreshTokenExpiresAtUtc { get; private set; }
 
     private User(
         Guid clinicId, string name, Email email, string? passwordHash,
@@ -117,5 +119,26 @@ public sealed class User : AggregateRoot
         PasswordHash = passwordHash;
         PasswordResetToken = null;
         PasswordResetTokenExpiresAtUtc = null;
+    }
+
+    public string GenerateRefreshToken()
+    {
+        RefreshToken = Guid.NewGuid().ToString("N");
+        RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
+        return RefreshToken;
+    }
+
+    public void RevokeRefreshToken()
+    {
+        RefreshToken = null;
+        RefreshTokenExpiresAtUtc = null;
+    }
+
+    public bool IsValidRefreshToken(string token)
+    {
+        return !string.IsNullOrWhiteSpace(RefreshToken) &&
+               RefreshToken == token &&
+               RefreshTokenExpiresAtUtc.HasValue &&
+               RefreshTokenExpiresAtUtc > DateTime.UtcNow;
     }
 }

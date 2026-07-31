@@ -5,6 +5,7 @@ using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
 using PetClinix.Modules.Identity.Application.UseCases.Login;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
+using PetClinix.Modules.Identity.Application.UseCases.RefreshToken;
 
 namespace PetClinix.Api.Controllers;
 
@@ -15,15 +16,18 @@ public class UsersController : ControllerBase
     private readonly ICommandHandler<SetPasswordCommand, Result> _setPasswordHandler;
     private readonly IUserRepository _userRepository;
     private readonly ICommandHandler<LoginCommand, Result<LoginResponse>> _loginHandler;
+    private readonly ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> _refreshTokenHandler;
 
     public UsersController(
         ICommandHandler<SetPasswordCommand, Result> setPasswordHandler,
         IUserRepository userRepository,
-        ICommandHandler<LoginCommand, Result<LoginResponse>> loginHandler)
+        ICommandHandler<LoginCommand, Result<LoginResponse>> loginHandler,
+        ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> refreshTokenHandler)
     {
         _setPasswordHandler = setPasswordHandler;
         _userRepository = userRepository;
         _loginHandler = loginHandler;
+        _refreshTokenHandler = refreshTokenHandler;
     }
 
     [HttpPost("set-password")]
@@ -38,6 +42,20 @@ public class UsersController : ControllerBase
         }
 
         return Ok(new { message = "Senha definida com sucesso!" });
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+    {
+        var command = new RefreshTokenCommand(request.RefreshToken);
+        var result = await _refreshTokenHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return Unauthorized(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return Ok(result.Value);
     }
 
     [EnableRateLimiting("LoginPolicy")]
@@ -72,3 +90,4 @@ public class UsersController : ControllerBase
 
 public record SetPasswordRequest(string Token, string Password);
 public record LoginRequest(string Email, string Password);
+public record RefreshTokenRequest(string RefreshToken);
