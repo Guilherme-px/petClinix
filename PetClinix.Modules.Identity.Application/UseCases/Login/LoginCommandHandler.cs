@@ -1,0 +1,50 @@
+using PetClinix.BuildingBlocks.Application;
+using PetClinix.Modules.Identity.Application.Contracts;
+using PetClinix.Modules.Identity.Domain.Repositories;
+using PetClinix.Modules.Identity.Domain.ValueObjects;
+
+namespace PetClinix.Modules.Identity.Application.UseCases.Login;
+
+public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<LoginResponse>>
+{
+    private readonly IUserRepository _userRepository;
+    private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
+
+    public LoginCommandHandler(
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        IJwtTokenGenerator jwtTokenGenerator)
+    {
+        _userRepository = userRepository;
+        _passwordHasher = passwordHasher;
+        _jwtTokenGenerator = jwtTokenGenerator;
+    }
+
+    public async Task<Result<LoginResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
+    {
+        var emailVo = Email.Create(command.Email);
+        var user = await _userRepository.GetByEmailAsync(emailVo, cancellationToken);
+
+        if (user == null || user.PasswordHash == null)
+        {
+            return Result<LoginResponse>.Failure("auth.invalid_credentials", "Usuário ou senha inválidos.");
+        }
+
+        var isPasswordValid = _passwordHasher.Verify(command.Password, user.PasswordHash);
+
+        if (!isPasswordValid)
+        {
+            return Result<LoginResponse>.Failure("auth.invalid_credentials", "Usuário ou senha inválidos.");
+        }
+
+        if (!user.IsActive)
+        {
+            return Result<LoginResponse>.Failure("auth.inactive_account", "Esta conta está desativada.");
+        }
+
+        var token = _jwtTokenGenerator.GenerateToken(user);
+
+        return Result<LoginResponse>.Success(new LoginResponse(token, user.Email.Value, user.Role.ToString()));
+    }
+}
