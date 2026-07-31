@@ -10,7 +10,6 @@ namespace PetClinix.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
-[EnableRateLimiting("LoginPolicy")]
 public class UsersController : ControllerBase
 {
     private readonly ICommandHandler<SetPasswordCommand, Result> _setPasswordHandler;
@@ -41,6 +40,7 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Senha definida com sucesso!" });
     }
 
+    [EnableRateLimiting("LoginPolicy")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
