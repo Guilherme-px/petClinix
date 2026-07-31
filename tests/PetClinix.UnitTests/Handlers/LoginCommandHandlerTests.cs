@@ -102,5 +102,6 @@ public class LoginCommandHandlerTests
         result.Value.Role.Should().Be(UserRole.Admin.ToString());
 
         _jwtTokenGeneratorMock.Received(1).GenerateToken(user);
+        await _userRepositoryMock.Received(1).UpdateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
     }
 }
