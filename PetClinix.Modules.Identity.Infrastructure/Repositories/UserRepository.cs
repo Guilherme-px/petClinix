@@ -18,7 +18,6 @@ public class UserRepository : IUserRepository
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default)
@@ -30,7 +29,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token, cancellationToken);
     }
-    
+
     public async Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);

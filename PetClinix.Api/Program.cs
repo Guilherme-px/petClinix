@@ -14,6 +14,7 @@ using PetClinix.Modules.Billing.Domain.Interfaces;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Billing.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
+using PetClinix.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +40,11 @@ builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<ICommandHandler<ActivateSubscriptionCommand, Result>, ActivateSubscriptionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<SetPasswordCommand, Result>, SetPasswordCommandHandler>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

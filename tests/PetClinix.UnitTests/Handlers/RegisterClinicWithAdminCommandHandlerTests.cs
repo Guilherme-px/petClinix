@@ -16,17 +16,20 @@ public class RegisterClinicWithAdminCommandHandlerTests
     private readonly IUserRepository _userRepositoryMock;
     private readonly IPasswordHasher _passwordHasherMock;
     private readonly RegisterClinicWithAdminCommandHandler _handler;
+    private readonly IUnitOfWork _unitOfWorkMock;
 
     public RegisterClinicWithAdminCommandHandlerTests()
     {
         _clinicRepositoryMock = Substitute.For<IClinicRepository>();
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _passwordHasherMock = Substitute.For<IPasswordHasher>();
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
 
         _handler = new RegisterClinicWithAdminCommandHandler(
             _clinicRepositoryMock,
             _userRepositoryMock,
-            _passwordHasherMock);
+            _passwordHasherMock,
+            _unitOfWorkMock);
     }
 
     private static RegisterClinicWithAdminCommand CreateValidCommand() => new()
@@ -78,8 +81,7 @@ public class RegisterClinicWithAdminCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        await _clinicRepositoryMock.Received(1).AddAsync(Arg.Any<Clinic>(), Arg.Any<CancellationToken>());
-        await _userRepositoryMock.Received(1).AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -13,15 +13,18 @@ public sealed class RegisterClinicWithAdminCommandHandler
     private readonly IClinicRepository _clinicRepository;
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IUnitOfWork _unitOfWork;
 
     public RegisterClinicWithAdminCommandHandler(
         IClinicRepository clinicRepository,
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IUnitOfWork unitOfWork)
     {
         _clinicRepository = clinicRepository;
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<RegisterClinicWithAdminResponse>> Handle(
@@ -59,7 +62,7 @@ public sealed class RegisterClinicWithAdminCommandHandler
                 command.TradeName,
                 command.LegalName,
                 command.DocumentNumber,
-                slug, 
+                slug,
                 command.Email,
                 command.PhoneNumber,
                 command.ZipCode,
@@ -81,6 +84,8 @@ public sealed class RegisterClinicWithAdminCommandHandler
 
             await _clinicRepository.AddAsync(clinic, cancellationToken);
             await _userRepository.AddAsync(adminUser, cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<RegisterClinicWithAdminResponse>.Success(
                 new RegisterClinicWithAdminResponse

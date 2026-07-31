@@ -18,7 +18,6 @@ public class ClinicRepository : IClinicRepository
     public async Task AddAsync(Clinic clinic, CancellationToken cancellationToken = default)
     {
         await _context.Clinics.AddAsync(clinic, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsBySlugAsync(ClinicSlug slug, CancellationToken cancellationToken = default)
