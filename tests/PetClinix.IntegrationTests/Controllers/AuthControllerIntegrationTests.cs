@@ -85,6 +85,37 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task RefreshToken_Should_Return_200_And_NewTokens_When_Valid()
+    {
+        var (email, password) = await SetupUserWithPasswordAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        var refreshRequest = new { RefreshToken = loginResult!.RefreshToken };
+        var response = await _client.PostAsJsonAsync("/api/users/refresh", refreshRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+        result.Should().NotBeNull();
+        result!.Token.Should().NotBeNullOrEmpty();
+        result.RefreshToken.Should().NotBeNullOrEmpty();
+
+        result.RefreshToken.Should().NotBe(loginResult.RefreshToken);
+    }
+
+    [Fact]
+    public async Task RefreshToken_Should_Return_401_When_Invalid()
+    {
+        var refreshRequest = new { RefreshToken = "token-invalido-fake-123" };
+        var response = await _client.PostAsJsonAsync("/api/users/refresh", refreshRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }
 
 public class LoginResponse
@@ -92,4 +123,11 @@ public class LoginResponse
     public string Token { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public class RefreshTokenResponse
+{
+    public string Token { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 }
