@@ -91,4 +91,50 @@ public class UserTests
 
         user.IsActive.Should().BeFalse();
     }
+
+    [Fact]
+    public void GeneratePasswordResetToken_Should_Set_Token_And_Expiry()
+    {
+        var user = User.CreateAdmin(
+            Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+
+        var token = user.GeneratePasswordResetToken();
+
+        token.Should().NotBeNullOrEmpty();
+        user.PasswordResetToken.Should().Be(token);
+        user.PasswordResetTokenExpiresAtUtc.Should().NotBeNull();
+        user.PasswordResetTokenExpiresAtUtc.Should().BeCloseTo(DateTime.UtcNow.AddHours(24), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void SetPassword_Should_Throw_Exception_When_Token_Is_Invalid()
+    {
+        var user = User.CreateAdmin(
+            Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+
+        user.GeneratePasswordResetToken();
+
+        Action act = () => user.SetPassword("token-errado", "hash_senha");
+
+        act.Should().Throw<IdentityDomainException>()
+           .WithMessage("*Token da redefinição inválido.*");
+    }
+
+    [Fact]
+    public void SetPassword_Should_Set_Hash_And_Clear_Token_When_Valid()
+    {
+        var user = User.CreateAdmin(
+            Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+
+        var token = user.GeneratePasswordResetToken();
+
+        user.SetPassword(token, "novo_hash_123");
+
+        user.PasswordHash.Should().Be("novo_hash_123");
+        user.PasswordResetToken.Should().BeNull();
+        user.PasswordResetTokenExpiresAtUtc.Should().BeNull();
+    }
 }
