@@ -17,6 +17,8 @@ public sealed class User : AggregateRoot
     public UserRole Role { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
+    public string? PasswordResetToken { get; private set; }
+    public DateTime? PasswordResetTokenExpiresAtUtc { get; private set; }
 
     private User(
         Guid clinicId, string name, Email email, string? passwordHash,
@@ -95,5 +97,25 @@ public sealed class User : AggregateRoot
                 "O nome do usuário é obrigatório.");
 
         Name = name.Trim();
+    }
+
+    public string GeneratePasswordResetToken()
+    {
+        PasswordResetToken = Guid.NewGuid().ToString("N");
+        PasswordResetTokenExpiresAtUtc = DateTime.UtcNow.AddHours(24);
+        return PasswordResetToken;
+    }
+
+    public void SetPassword(string token, string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(PasswordResetToken) || PasswordResetToken != token)
+            throw new IdentityDomainException("identity.user.invalid_token", "Token da redefinição inválido.");
+
+        if (PasswordResetTokenExpiresAtUtc == null || PasswordResetTokenExpiresAtUtc < DateTime.UtcNow)
+            throw new IdentityDomainException("identity.user.expired_token", "Token de redefinição expirado.");
+
+        PasswordHash = passwordHash;
+        PasswordResetToken = null;
+        PasswordResetTokenExpiresAtUtc = null;
     }
 }

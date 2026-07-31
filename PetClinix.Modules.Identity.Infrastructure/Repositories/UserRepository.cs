@@ -25,4 +25,20 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.AnyAsync(u => u.Email == email, cancellationToken);
     }
+
+    public async Task<User?> GetByPasswordResetTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token, cancellationToken);
+    }
+    
+    public async Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+    }
+
+    public async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

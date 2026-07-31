@@ -13,6 +13,7 @@ using PetClinix.Modules.Billing.Infrastructure.Services;
 using PetClinix.Modules.Billing.Domain.Interfaces;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Billing.Infrastructure.Repositories;
+using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<CreateCheckoutSessionResponse>>, CreateCheckoutSessionCommandHandler>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<ICommandHandler<ActivateSubscriptionCommand, Result>, ActivateSubscriptionCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<SetPasswordCommand, Result>, SetPasswordCommandHandler>();
 
 var app = builder.Build();
 
