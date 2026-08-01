@@ -99,6 +99,9 @@ A solução segue os princípios de:
 ├── PetClinix.BuildingBlocks.Application/       # Contratos base (interfaces CQRS, Result pattern)
 ├── PetClinix.BuildingBlocks.Domain/            # Contratos de domínio base (Entity, AggregateRoot, DomainEvents)
 ├── PetClinix.BuildingBlocks.Infrastructure/    # Contratos de infraestrutura base
+├── PetClinix.Modules.Billing.Application/      # Casos de uso de cobrança (Stripe Checkout)
+├── PetClinix.Modules.Billing.Domain/           # Lógica de negócio de cobrança (Subscription entity)
+├── PetClinix.Modules.Billing.Infrastructure/   # Persistência de cobrança & integração com Stripe
 ├── PetClinix.Modules.Identity.Application/     # Casos de uso de Identidade (Commands, Handlers, Validators)
 ├── PetClinix.Modules.Identity.Domain/          # Lógica de negócio de Identidade (Entities, Value Objects)
 └── PetClinix.Modules.Identity.Infrastructure/  # Persistência de Identidade (EF Core, Repositories)
@@ -118,6 +121,8 @@ tests/
 - **Validação:** FluentValidation
 - **Testes:** xUnit, NSubstitute, FluentAssertions, Testcontainers
 - **Documentação da API:** Swagger / OpenAPI
+- **Pagamentos:** Stripe API (Checkout & Webhooks)
+- **Segurança:** JWT Authentication, Refresh Tokens, Rate Limiting, CORS
 
 ---
 
@@ -147,6 +152,10 @@ Antes de começar, garanta que você tenha o seguinte instalado em sua máquina:
      dotnet tool install --global dotnet-ef
      ```
 
+5. **Stripe CLI**
+   - Necessário para testar o fluxo de pagamento de assinaturas e os webhooks localmente..
+   - Guia de instalação: [https://stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
+
 ---
 
 ## Iniciando
@@ -167,7 +176,17 @@ Crie o arquivo `PetClinix.Api/appsettings.Development.json` e adicione sua strin
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=postgres;Password=sua_senha_aqui"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=postgres;Password=your_password_here"
+  },
+  "Stripe": {
+    "SecretKey": "sk_test_YOUR_STRIPE_SECRET_KEY",
+    "WebhookSecret": "whsec_YOUR_WEBHOOK_SECRET"
+  },
+  "JwtSettings": {
+    "SecretKey": "SuperSecretKeyChangeThisInProductionAtLeast32CharactersLong",
+    "Issuer": "PetClinix",
+    "Audience": "PetClinixUsers",
+    "ExpiryMinutes": 60
   }
 }
 ```
@@ -185,6 +204,23 @@ dotnet run --project PetClinix.Api
 ```
 Uma vez em execução, abra seu navegador e navegue até o Swagger UI para testar os endpoints da API:
 - **Swagger UI:** `http://localhost:<porta>/swagger` (verifique a saída do seu terminal para a porta exata, geralmente `5180` ou `5000`).
+
+### 5. Configure o Stripe Webhooks (Local Development)
+Para testar o fluxo de pagamento localmente, você precisa encaminhar os eventos de webhook do Stripe para sua API local.
+
+1. Faça login na sua conta do Stripe via CLI:
+   ```bash
+   stripe login
+   ```
+2. Comece a escutar webhooks e encaminhe-os para o seu endpoint de API local (ajuste a porta, se necessário):
+   ```bash
+   stripe listen --forward-to http://localhost:5180/api/webhooks/stripe
+   ```
+3. A CLI exibirá um segredo de assinatura de webhook (por exemplo, `whsec_...`). Copie esse segredo e cole-o no seu arquivo `appsettings.Development.json`, em `Stripe:WebhookSecret`.
+4. Para simular um evento de pagamento bem-sucedido em outro terminal, execute:
+   ```bash
+   stripe trigger checkout.session.completed
+   ```
 
 ---
 
@@ -219,7 +255,10 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Integração com PostgreSQL usando EF Core
 - [x] Fluxo de checkout de assinatura via Stripe
 - [x] Tratamento de Webhook para sucesso de pagamento
-- [ ] Módulo de Identidade: Definição de Senha e Login (JWT)
+- [x] Módulo de Identidade: Definição de Senha e Login (JWT)
+- [x] Hardening da API: Rate Limiting, CORS e Tratamento Global de Erros
+- [x] Operações Atômicas no Banco de Dados (Padrão Unit of Work)
+- [x] Suíte Abrangente de Testes (Testes Unitários com NSubstitute e Testes de Integração E2E com Testcontainers)
 - [ ] Módulo de gerenciamento de funcionários
 - [ ] Módulo de cadastro de Pets e Tutores
 - [ ] Agendamento e fluxos de trabalho clínicos

@@ -99,7 +99,10 @@ The solution follows the principles of:
 ├── PetClinix.BuildingBlocks.Application/       # Base contracts (CQRS interfaces, Result pattern)
 ├── PetClinix.BuildingBlocks.Domain/            # Base domain contracts (Entity, AggregateRoot, DomainEvents)
 ├── PetClinix.BuildingBlocks.Infrastructure/    # Base infrastructure contracts
-├── PetClinix.Modules.Identity.Application/     # Identity use cases (Commands, Handlers, Validators)
+├── PetClinix.Modules.Billing.Application/      # Billing use cases (Stripe Checkout)
+├── PetClinix.Modules.Billing.Domain/           # Billing business logic (Subscription entity)
+├── PetClinix.Modules.Billing.Infrastructure/   # Billing persistence & Stripe integration
+├── PetClinix.Modules.Identity.Application/     # Identity use cases (Auth, Users)
 ├── PetClinix.Modules.Identity.Domain/          # Identity business logic (Entities, Value Objects)
 └── PetClinix.Modules.Identity.Infrastructure/  # Identity persistence (EF Core, Repositories)
 tests/
@@ -117,6 +120,8 @@ tests/
 - **Validation:** FluentValidation
 - **Testing:** xUnit, NSubstitute, FluentAssertions, Testcontainers
 - **API Documentation:** Swagger / OpenAPI
+- **Payments:** Stripe API (Checkout & Webhooks)
+- **Security:** JWT Authentication, Refresh Tokens, Rate Limiting, CORS
 
 ---
 
@@ -146,6 +151,10 @@ Before you begin, ensure you have the following installed on your machine:
      dotnet tool install --global dotnet-ef
      ```
 
+5. **Stripe CLI**
+   - Required to test the subscription payment flow and webhooks locally.
+   - Installation guide: [https://stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
+
 ---
 
 ## Getting Started
@@ -167,6 +176,16 @@ Create the file `PetClinix.Api/appsettings.Development.json` and add your connec
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=postgres;Password=your_password_here"
+  },
+  "Stripe": {
+    "SecretKey": "sk_test_YOUR_STRIPE_SECRET_KEY",
+    "WebhookSecret": "whsec_YOUR_WEBHOOK_SECRET"
+  },
+  "JwtSettings": {
+    "SecretKey": "SuperSecretKeyChangeThisInProductionAtLeast32CharactersLong",
+    "Issuer": "PetClinix",
+    "Audience": "PetClinixUsers",
+    "ExpiryMinutes": 60
   }
 }
 ```
@@ -184,6 +203,23 @@ dotnet run --project PetClinix.Api
 ```
 Once running, open your browser and navigate to the Swagger UI to test the API endpoints:
 - **Swagger UI:** `http://localhost:<port>/swagger` (check your terminal output for the exact port, usually `5180` or `5000`).
+
+### 5. Setup Stripe Webhooks (Local Development)
+To test the payment flow locally, you need to forward Stripe webhook events to your local API.
+
+1. Log in to your Stripe account via CLI:
+   ```bash
+   stripe login
+   ```
+2. Start listening for webhooks and forward them to your local API endpoint (adjust the port if necessary):
+   ```bash
+   stripe listen --forward-to http://localhost:5180/api/webhooks/stripe
+   ```
+3. The CLI will output a webhook signing secret (e.g., `whsec_...`). Copy this secret and paste it into your `appsettings.Development.json` under `Stripe:WebhookSecret`.
+4. To simulate a successful payment event in another terminal, run:
+   ```bash
+   stripe trigger checkout.session.completed
+   ```
 
 ---
 
@@ -218,7 +254,11 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] PostgreSQL integration with EF Core
 - [x] Stripe subscription checkout flow
 - [x] Webhook handling for payment success
-- [ ] Identity module: Password definition & Login (JWT)
+- [x] Identity module: Password definition & Login (JWT)
+- [x] API Hardening: Rate Limiting, CORS & Global Exception Handling
+- [x] Atomic Database Operations (Unit of Work pattern)
+- [x] Comprehensive Testing Suite (Unit tests with NSubstitute & E2E Integration tests with Testcontainers)
+- [ ] Employee management module
 - [ ] Employee management module
 - [ ] Pet & Tutor registration module
 - [ ] Scheduling and clinical workflows
