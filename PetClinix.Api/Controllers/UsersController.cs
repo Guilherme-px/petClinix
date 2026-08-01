@@ -9,6 +9,7 @@ using PetClinix.Modules.Identity.Application.UseCases.Login;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
 using PetClinix.Modules.Identity.Application.UseCases.RefreshToken;
+using PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
 
 namespace PetClinix.Api.Controllers;
 
@@ -21,18 +22,21 @@ public class UsersController : ControllerBase
     private readonly ICommandHandler<LoginCommand, Result<LoginResponse>> _loginHandler;
     private readonly ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> _refreshTokenHandler;
     private readonly ICommandHandler<GetProfileQuery, Result<ProfileResponse>> _getProfileHandler;
+    private readonly ICommandHandler<UpdateUserCommand, Result> _updateUserHandler;
 
     public UsersController(
         ICommandHandler<SetPasswordCommand, Result> setPasswordHandler,
         IUserRepository userRepository,
         ICommandHandler<LoginCommand, Result<LoginResponse>> loginHandler,
         ICommandHandler<GetProfileQuery, Result<ProfileResponse>> getProfileHandler,
+        ICommandHandler<UpdateUserCommand, Result> updateUserHandler,
         ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> refreshTokenHandler)
     {
         _setPasswordHandler = setPasswordHandler;
         _userRepository = userRepository;
         _loginHandler = loginHandler;
         _getProfileHandler = getProfileHandler;
+        _updateUserHandler = updateUserHandler;
         _refreshTokenHandler = refreshTokenHandler;
     }
 
@@ -115,8 +119,32 @@ public class UsersController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID do usuário." });
+        }
+
+        var command = new UpdateUserCommand(userId, request.Name, request.PhoneNumber, request.BirthDate);
+        var result = await _updateUserHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record SetPasswordRequest(string Token, string Password);
 public record LoginRequest(string Email, string Password);
 public record RefreshTokenRequest(string RefreshToken);
+public record UpdateUserRequest(string Name, string PhoneNumber, DateOnly BirthDate);

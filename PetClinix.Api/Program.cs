@@ -18,6 +18,7 @@ using PetClinix.Modules.Identity.Application.UseCases.RegisterClinicWithAdmin;
 using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
 using PetClinix.Modules.Identity.Application.UseCases.RefreshToken;
 using PetClinix.Modules.Identity.Application.UseCases.GetProfile;
+using PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Repositories;
@@ -69,6 +70,7 @@ builder.Services.AddScoped<ICommandHandler<CreateCheckoutSessionCommand, Result<
 builder.Services.AddScoped<ICommandHandler<ActivateSubscriptionCommand, Result>, ActivateSubscriptionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>>, RefreshTokenCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetProfileQuery, Result<ProfileResponse>>, GetProfileQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<UpdateUserCommand, Result>, UpdateUserCommandHandler>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada.");

@@ -141,4 +141,14 @@ public sealed class User : AggregateRoot
                RefreshTokenExpiresAtUtc.HasValue &&
                RefreshTokenExpiresAtUtc > DateTime.UtcNow;
     }
+
+    public void UpdatePersonalInfo(string name, string phoneNumber, DateOnly birthDate)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new IdentityDomainException("identity.user.name_required", "O nome do usuário é obrigatório.");
+
+        Name = name.Trim();
+        PhoneNumber = PhoneNumber.Create(phoneNumber);
+        BirthDate = birthDate;
+    }
 }
