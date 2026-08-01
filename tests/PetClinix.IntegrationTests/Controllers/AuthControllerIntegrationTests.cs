@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Xunit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PetClinix.Modules.Identity.Infrastructure.Persistence;
 
 namespace PetClinix.IntegrationTests.Controllers;
 
@@ -145,6 +148,55 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
         result!.Email.Should().Be(email);
         result.Role.Should().Be("Admin");
         result.Clinic.Should().NotBeNull();
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateProfile_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            Name = "Novo Nome",
+            PhoneNumber = "11912345678",
+            BirthDate = new DateOnly(1990, 1, 1)
+        };
+
+        var response = await _client.PutAsJsonAsync("/api/users/me", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password) = await SetupUserWithPasswordAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            Name = "Nome Alterado no Teste",
+            PhoneNumber = "11912345678",
+            BirthDate = new DateOnly(1991, 5, 15)
+        };
+
+        var response = await _client.PutAsJsonAsync("/api/users/me", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        var emailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create(email);
+        var savedUser = await db.Users.FirstOrDefaultAsync(u => u.Email == emailVo);
+
+        savedUser.Should().NotBeNull();
+        savedUser!.Name.Should().Be("Nome Alterado no Teste");
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
