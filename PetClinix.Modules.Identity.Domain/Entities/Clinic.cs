@@ -8,7 +8,7 @@ namespace PetClinix.Modules.Identity.Domain.Entities;
 public sealed class Clinic : AggregateRoot
 {
     public string TradeName { get; private set; }
-    public string LegalName { get; private set; } 
+    public string LegalName { get; private set; }
     public string DocumentNumber { get; private set; }
     public ClinicSlug Slug { get; private set; }
     public Email Email { get; private set; }
@@ -71,27 +71,50 @@ public sealed class Clinic : AggregateRoot
         string neighborhood, string? complement, string city, string state)
     {
         return new Clinic(
-            tradeName, 
-            legalName, 
-            documentNumber, 
-            slug, 
-            Email.Create(email), 
+            tradeName,
+            legalName,
+            documentNumber,
+            slug,
+            Email.Create(email),
             PhoneNumber.Create(phoneNumber),
-            zipCode, 
-            street, 
-            number, 
-            neighborhood, 
-            complement, 
-            city, 
+            zipCode,
+            street,
+            number,
+            neighborhood,
+            complement,
+            city,
             state);
     }
 
     public void Deactivate() => Status = ClinicStatus.Inactive;
     public void Activate() => Status = ClinicStatus.Active;
 
-    public void UpdateContactInfo(string email, string phoneNumber)
+    public void UpdateInfo(
+    string tradeName, string legalName, string documentNumber,
+    string email, string phoneNumber,
+    string zipCode, string street, string number, string neighborhood,
+    string? complement, string city, string state)
     {
+        if (string.IsNullOrWhiteSpace(tradeName))
+            throw new IdentityDomainException("identity.clinic.trade_name_required", "O nome fantasia da clínica é obrigatório.");
+        if (string.IsNullOrWhiteSpace(legalName))
+            throw new IdentityDomainException("identity.clinic.legal_name_required", "A razão social da clínica é obrigatória.");
+        if (string.IsNullOrWhiteSpace(documentNumber))
+            throw new IdentityDomainException("identity.clinic.document_required", "O CNPJ da clínica é obrigatório.");
+
+        TradeName = tradeName.Trim();
+        LegalName = legalName.Trim();
+        DocumentNumber = documentNumber.Trim();
+
         Email = Email.Create(email);
         PhoneNumber = PhoneNumber.Create(phoneNumber);
+
+        ZipCode = zipCode.Trim();
+        Street = street.Trim();
+        Number = number.Trim();
+        Neighborhood = neighborhood.Trim();
+        Complement = string.IsNullOrWhiteSpace(complement) ? null : complement.Trim();
+        City = city.Trim();
+        State = state.Trim();
     }
 }

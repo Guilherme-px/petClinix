@@ -34,4 +34,10 @@ public class ClinicRepository : IClinicRepository
     {
         return await _context.Clinics.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
+
+    public async Task UpdateAsync(Clinic clinic, CancellationToken cancellationToken = default)
+    {
+        _context.Clinics.Update(clinic);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

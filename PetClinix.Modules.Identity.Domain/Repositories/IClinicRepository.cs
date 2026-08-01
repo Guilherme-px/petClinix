@@ -9,4 +9,5 @@ public interface IClinicRepository
     Task<bool> ExistsBySlugAsync(ClinicSlug slug, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default);
     Task<Clinic?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Clinic clinic, CancellationToken cancellationToken = default);
 }
