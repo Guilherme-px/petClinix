@@ -259,7 +259,6 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Atomic Database Operations (Unit of Work pattern)
 - [x] Comprehensive Testing Suite (Unit tests with NSubstitute & E2E Integration tests with Testcontainers)
 - [ ] Employee management module
-- [ ] Employee management module
 - [ ] Pet & Tutor registration module
 - [ ] Scheduling and clinical workflows
 
