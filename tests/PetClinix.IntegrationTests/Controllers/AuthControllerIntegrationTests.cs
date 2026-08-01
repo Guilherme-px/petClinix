@@ -200,6 +200,73 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateClinic_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            TradeName = "Novo Nome",
+            LegalName = "Nova Razao",
+            DocumentNumber = "12345678000199",
+            Email = "novo@clinica.com",
+            PhoneNumber = "11912345678",
+            ZipCode = "01001000",
+            Street = "Rua Teste",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = "",
+            City = "SP",
+            State = "SP"
+        };
+
+        var response = await _client.PutAsJsonAsync("/api/clinics/me", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateClinic_Should_Return_204_And_Update_Db_When_Valid_Admin()
+    {
+        var (email, password) = await SetupUserWithPasswordAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            TradeName = "Clinica Alterada no Teste",
+            LegalName = "Razao Alterada",
+            DocumentNumber = "12345678000199",
+            Email = "alterada@clinica.com",
+            PhoneNumber = "11912345678",
+            ZipCode = "01001000",
+            Street = "Rua Nova",
+            Number = "100",
+            Neighborhood = "Centro",
+            Complement = "Sala 2",
+            City = "Sao Paulo",
+            State = "SP"
+        };
+
+        var response = await _client.PutAsJsonAsync("/api/clinics/me", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        var emailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create("alterada@clinica.com");
+        var savedClinic = await db.Clinics.FirstOrDefaultAsync(c => c.Email == emailVo);
+
+        savedClinic.Should().NotBeNull();
+        savedClinic!.TradeName.Should().Be("Clinica Alterada no Teste");
+        savedClinic.City.Should().Be("Sao Paulo");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class LoginResponse
