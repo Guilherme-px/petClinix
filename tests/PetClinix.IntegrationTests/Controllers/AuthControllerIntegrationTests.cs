@@ -116,6 +116,38 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task GetProfile_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.GetAsync("/api/users/me");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetProfile_Should_Return_200_And_Profile_Data_When_Token_Is_Valid()
+    {
+        var (email, password) = await SetupUserWithPasswordAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var response = await _client.GetAsync("/api/users/me");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<ProfileResponse>();
+        result.Should().NotBeNull();
+        result!.Email.Should().Be(email);
+        result.Role.Should().Be("Admin");
+        result.Clinic.Should().NotBeNull();
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class LoginResponse
@@ -130,4 +162,19 @@ public class RefreshTokenResponse
 {
     public string Token { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
+}
+
+public class ProfileResponse
+{
+    public Guid UserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public ClinicResponse Clinic { get; set; } = new();
+}
+
+public class ClinicResponse
+{
+    public Guid ClinicId { get; set; }
+    public string TradeName { get; set; } = string.Empty;
 }
