@@ -70,13 +70,19 @@ public class ClinicTests
     }
 
     [Fact]
-    public void UpdateContactInfo_Should_Change_Email_And_Phone()
+    public void UpdateInfo_Should_Change_Clinic_Data()
     {
         var clinic = CreateValidClinic();
 
-        clinic.UpdateContactInfo("novo@email.com", "1188887777");
+        clinic.UpdateInfo(
+            "Novo Nome", "Nova Razao", "12345678000199",
+            "novo@email.com", "1188887777",
+            "01001000", "Nova Rua", "999", "Novo Bairro",
+            null, "Santos", "SP");
 
+        clinic.TradeName.Should().Be("Novo Nome");
         clinic.Email.Value.Should().Be("novo@email.com");
         clinic.PhoneNumber.Value.Should().Be("1188887777");
+        clinic.City.Should().Be("Santos");
     }
 }
