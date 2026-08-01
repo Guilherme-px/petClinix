@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using PetClinix.Modules.Identity.Application.UseCases.GetProfile;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
 using PetClinix.Modules.Identity.Application.UseCases.Login;
@@ -17,16 +20,19 @@ public class UsersController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly ICommandHandler<LoginCommand, Result<LoginResponse>> _loginHandler;
     private readonly ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> _refreshTokenHandler;
+    private readonly ICommandHandler<GetProfileQuery, Result<ProfileResponse>> _getProfileHandler;
 
     public UsersController(
         ICommandHandler<SetPasswordCommand, Result> setPasswordHandler,
         IUserRepository userRepository,
         ICommandHandler<LoginCommand, Result<LoginResponse>> loginHandler,
+        ICommandHandler<GetProfileQuery, Result<ProfileResponse>> getProfileHandler,
         ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> refreshTokenHandler)
     {
         _setPasswordHandler = setPasswordHandler;
         _userRepository = userRepository;
         _loginHandler = loginHandler;
+        _getProfileHandler = getProfileHandler;
         _refreshTokenHandler = refreshTokenHandler;
     }
 
@@ -85,6 +91,29 @@ public class UsersController : ControllerBase
         await _userRepository.UpdateAsync(user, CancellationToken.None);
 
         return Ok(new { token });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID do usuário." });
+        }
+
+        var query = new GetProfileQuery(userId);
+        var result = await _getProfileHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return Ok(result.Value);
     }
 }
 

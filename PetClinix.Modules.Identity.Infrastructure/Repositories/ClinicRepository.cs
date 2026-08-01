@@ -29,4 +29,9 @@ public class ClinicRepository : IClinicRepository
     {
         return await _context.Clinics.AnyAsync(c => c.Email == email, cancellationToken);
     }
+
+    public async Task<Clinic?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Clinics.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
 }
