@@ -5,4 +5,5 @@ namespace PetClinix.Modules.Billing.Application.Contracts;
 public interface IStripeService
 {
     Task<string> CreateCheckoutSessionAsync(CreateCheckoutSessionCommand command, CancellationToken cancellationToken);
+    Task<string> CreateBillingPortalSessionAsync(string stripeCustomerId, string returnUrl, CancellationToken cancellationToken);
 }

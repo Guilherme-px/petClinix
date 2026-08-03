@@ -42,4 +42,18 @@ public class StripeService : IStripeService
 
         return session.Url;
     }
+
+    public async Task<string> CreateBillingPortalSessionAsync(string stripeCustomerId, string returnUrl, CancellationToken cancellationToken)
+    {
+        var options = new Stripe.BillingPortal.SessionCreateOptions
+        {
+            Customer = stripeCustomerId,
+            ReturnUrl = returnUrl
+        };
+
+        var service = new Stripe.BillingPortal.SessionService();
+        var session = await service.CreateAsync(options, cancellationToken: cancellationToken);
+
+        return session.Url;
+    }   
 }
