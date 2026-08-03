@@ -32,6 +32,7 @@ public sealed class SetPasswordCommandHandler : ICommandHandler<SetPasswordComma
             var passwordHash = _passwordHasher.Hash(command.Password);
             user.SetPassword(command.Token, passwordHash);
 
+            await _userRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
