@@ -18,14 +18,16 @@ public class LoginCommandHandlerTests
     private readonly IPasswordHasher _passwordHasherMock;
     private readonly IJwtTokenGenerator _jwtTokenGeneratorMock;
     private readonly LoginCommandHandler _handler;
+    private readonly IUnitOfWork _unitOfWorkMock;
 
     public LoginCommandHandlerTests()
     {
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _passwordHasherMock = Substitute.For<IPasswordHasher>();
         _jwtTokenGeneratorMock = Substitute.For<IJwtTokenGenerator>();
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
 
-        _handler = new LoginCommandHandler(_userRepositoryMock, _passwordHasherMock, _jwtTokenGeneratorMock);
+        _handler = new LoginCommandHandler(_userRepositoryMock, _passwordHasherMock, _jwtTokenGeneratorMock, _unitOfWorkMock);
     }
 
     private static User CreateValidUser(string? passwordHash = "valid_hash")

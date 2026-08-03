@@ -14,11 +14,13 @@ public class UpdateClinicCommandHandlerTests
 {
     private readonly IClinicRepository _clinicRepositoryMock;
     private readonly UpdateClinicCommandHandler _handler;
+    private readonly IUnitOfWork _unitOfWorkMock;
 
     public UpdateClinicCommandHandlerTests()
     {
         _clinicRepositoryMock = Substitute.For<IClinicRepository>();
-        _handler = new UpdateClinicCommandHandler(_clinicRepositoryMock);
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _handler = new UpdateClinicCommandHandler(_clinicRepositoryMock, _unitOfWorkMock);
     }
 
     private static Clinic CreateValidClinic()

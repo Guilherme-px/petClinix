@@ -17,12 +17,14 @@ public class SetPasswordCommandHandlerTests
     private readonly IUserRepository _userRepositoryMock;
     private readonly IPasswordHasher _passwordHasherMock;
     private readonly SetPasswordCommandHandler _handler;
+    private readonly IUnitOfWork _unitOfWorkMock;
 
     public SetPasswordCommandHandlerTests()
     {
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _passwordHasherMock = Substitute.For<IPasswordHasher>();
-        _handler = new SetPasswordCommandHandler(_userRepositoryMock, _passwordHasherMock);
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _handler = new SetPasswordCommandHandler(_userRepositoryMock, _passwordHasherMock, _unitOfWorkMock);
     }
 
     private static SetPasswordCommand CreateValidCommand() => new("valid-token-123", "NovaSenhaSegura123");

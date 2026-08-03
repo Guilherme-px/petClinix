@@ -13,11 +13,13 @@ public class UpdateUserCommandHandlerTests
 {
     private readonly IUserRepository _userRepositoryMock;
     private readonly UpdateUserCommandHandler _handler;
+    private readonly IUnitOfWork _unitOfWorkMock;   
 
     public UpdateUserCommandHandlerTests()
     {
         _userRepositoryMock = Substitute.For<IUserRepository>();
-        _handler = new UpdateUserCommandHandler(_userRepositoryMock);
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _handler = new UpdateUserCommandHandler(_userRepositoryMock, _unitOfWorkMock);
     }
 
     private static User CreateValidUser()
