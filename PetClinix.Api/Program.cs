@@ -79,6 +79,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateClinicCommand, Result>, UpdateC
 builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, UpdateAccountCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
+builder.Services.AddScoped<PetClinix.Modules.Identity.Application.Contracts.ISubscriptionStatusService, PetClinix.Modules.Billing.Infrastructure.Services.SubscriptionStatusService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada.");

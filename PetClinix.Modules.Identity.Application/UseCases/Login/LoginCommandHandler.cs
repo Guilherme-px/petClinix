@@ -11,17 +11,20 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<L
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ISubscriptionStatusService _subscriptionStatusService;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ISubscriptionStatusService subscriptionStatusService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
         _unitOfWork = unitOfWork;
+        _subscriptionStatusService = subscriptionStatusService;
     }
 
     public async Task<Result<LoginResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
@@ -44,6 +47,12 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<L
         if (!user.IsActive)
         {
             return Result<LoginResponse>.Failure("auth.inactive_account", "Esta conta está desativada.");
+        }
+
+        var isClinicActive = await _subscriptionStatusService.IsClinicActiveAsync(user.ClinicId, cancellationToken);
+        if (!isClinicActive)
+        {
+            return Result<LoginResponse>.Failure("auth.subscription_inactive", "A assinatura da clínica está inativa ou cancelada. Acesse o portal para reativar.");
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);
