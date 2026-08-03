@@ -267,6 +267,58 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateAccount_Should_Return_204_And_Update_Both_User_And_Clinic_In_Db()
+    {
+        var (email, password) = await SetupUserWithPasswordAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            UserName = "Nome Alterado",
+            UserPhoneNumber = "11999998888",
+            UserBirthDate = new DateOnly(1991, 5, 15),
+            ClinicTradeName = "Clinica Alterada no Teste",
+            ClinicLegalName = "Razao Alterada",
+            ClinicDocumentNumber = "12345678000199",
+            ClinicEmail = "alterada@clinica.com",
+            ClinicPhoneNumber = "11912345678",
+            ClinicZipCode = "01001000",
+            ClinicStreet = "Rua Nova",
+            ClinicNumber = "100",
+            ClinicNeighborhood = "Centro",
+            ClinicComplement = "Sala 2",
+            ClinicCity = "Sao Paulo",
+            ClinicState = "SP"
+        };
+
+        var response = await _client.PutAsJsonAsync("/api/account/me", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        var emailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create(email);
+        var savedUser = await db.Users.FirstOrDefaultAsync(u => u.Email == emailVo);
+
+        var clinicEmailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create("alterada@clinica.com");
+        var savedClinic = await db.Clinics.FirstOrDefaultAsync(c => c.Email == clinicEmailVo);
+
+        savedUser.Should().NotBeNull();
+        savedUser!.Name.Should().Be("Nome Alterado");
+
+        savedClinic.Should().NotBeNull();
+        savedClinic!.TradeName.Should().Be("Clinica Alterada no Teste");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class LoginResponse
