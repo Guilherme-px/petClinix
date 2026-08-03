@@ -1,15 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using PetClinix.Modules.Identity.Application.UseCases.GetProfile;
 using PetClinix.BuildingBlocks.Application;
-using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
+using PetClinix.Modules.Identity.Application.UseCases.GetProfile;
 using PetClinix.Modules.Identity.Application.UseCases.Login;
+using PetClinix.Modules.Identity.Application.UseCases.RefreshToken;
+using PetClinix.Modules.Identity.Application.UseCases.SetPassword;
+using PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
-using PetClinix.Modules.Identity.Application.UseCases.RefreshToken;
-using PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
+using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
 
@@ -18,26 +18,29 @@ namespace PetClinix.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly ICommandHandler<SetPasswordCommand, Result> _setPasswordHandler;
-    private readonly IUserRepository _userRepository;
     private readonly ICommandHandler<LoginCommand, Result<LoginResponse>> _loginHandler;
     private readonly ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> _refreshTokenHandler;
     private readonly ICommandHandler<GetProfileQuery, Result<ProfileResponse>> _getProfileHandler;
     private readonly ICommandHandler<UpdateUserCommand, Result> _updateUserHandler;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public UsersController(
         ICommandHandler<SetPasswordCommand, Result> setPasswordHandler,
-        IUserRepository userRepository,
         ICommandHandler<LoginCommand, Result<LoginResponse>> loginHandler,
+        ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> refreshTokenHandler,
         ICommandHandler<GetProfileQuery, Result<ProfileResponse>> getProfileHandler,
         ICommandHandler<UpdateUserCommand, Result> updateUserHandler,
-        ICommandHandler<RefreshTokenCommand, Result<RefreshTokenResponse>> refreshTokenHandler)
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork)
     {
         _setPasswordHandler = setPasswordHandler;
-        _userRepository = userRepository;
         _loginHandler = loginHandler;
+        _refreshTokenHandler = refreshTokenHandler;
         _getProfileHandler = getProfileHandler;
         _updateUserHandler = updateUserHandler;
-        _refreshTokenHandler = refreshTokenHandler;
+        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpPost("set-password")]
@@ -52,20 +55,6 @@ public class UsersController : ControllerBase
         }
 
         return Ok(new { message = "Senha definida com sucesso!" });
-    }
-
-    [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
-    {
-        var command = new RefreshTokenCommand(request.RefreshToken);
-        var result = await _refreshTokenHandler.Handle(command, cancellationToken);
-
-        if (result.IsFailure)
-        {
-            return Unauthorized(new { result.ErrorCode, result.ErrorMessage });
-        }
-
-        return Ok(result.Value);
     }
 
     [EnableRateLimiting("LoginPolicy")]
@@ -83,18 +72,18 @@ public class UsersController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpGet("{email}/generate-reset-token")]
-    public async Task<IActionResult> GenerateResetToken(string email)
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        var emailVo = Email.Create(email);
+        var command = new RefreshTokenCommand(request.RefreshToken);
+        var result = await _refreshTokenHandler.Handle(command, cancellationToken);
 
-        var user = await _userRepository.GetByEmailAsync(emailVo, CancellationToken.None);
-        if (user == null) return NotFound("Usuário não encontrado");
+        if (result.IsFailure)
+        {
+            return Unauthorized(new { result.ErrorCode, result.ErrorMessage });
+        }
 
-        var token = user.GeneratePasswordResetToken();
-        await _userRepository.UpdateAsync(user, CancellationToken.None);
-
-        return Ok(new { token });
+        return Ok(result.Value);
     }
 
     [Authorize]
@@ -141,6 +130,22 @@ public class UsersController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("{email}/generate-reset-token")]
+    public async Task<IActionResult> GenerateResetToken(string email)
+    {
+        var emailVo = Email.Create(email);
+
+        var user = await _userRepository.GetByEmailAsync(emailVo, CancellationToken.None);
+        if (user == null) return NotFound("Usuário não encontrado");
+
+        var token = user.GeneratePasswordResetToken();
+
+        await _userRepository.UpdateAsync(user, CancellationToken.None);
+        await _unitOfWork.SaveChangesAsync(CancellationToken.None);
+
+        return Ok(new { token });
     }
 }
 

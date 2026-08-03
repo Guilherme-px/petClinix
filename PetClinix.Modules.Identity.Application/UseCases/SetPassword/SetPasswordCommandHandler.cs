@@ -9,11 +9,13 @@ public sealed class SetPasswordCommandHandler : ICommandHandler<SetPasswordComma
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public SetPasswordCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public SetPasswordCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher, IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(SetPasswordCommand command, CancellationToken cancellationToken)
@@ -30,7 +32,7 @@ public sealed class SetPasswordCommandHandler : ICommandHandler<SetPasswordComma
             var passwordHash = _passwordHasher.Hash(command.Password);
             user.SetPassword(command.Token, passwordHash);
 
-            await _userRepository.UpdateAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (IdentityDomainException ex)

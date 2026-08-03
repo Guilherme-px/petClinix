@@ -10,15 +10,18 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<L
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<LoginResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
@@ -47,6 +50,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<L
         var refreshToken = user.GenerateRefreshToken();
 
         await _userRepository.UpdateAsync(user, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<LoginResponse>.Success(new LoginResponse(token, refreshToken, user.Email.Value, user.Role.ToString()));
     }

@@ -7,10 +7,12 @@ namespace PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
 public sealed class UpdateClinicCommandHandler : ICommandHandler<UpdateClinicCommand, Result>
 {
     private readonly IClinicRepository _clinicRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateClinicCommandHandler(IClinicRepository clinicRepository)
+    public UpdateClinicCommandHandler(IClinicRepository clinicRepository, IUnitOfWork unitOfWork)
     {
         _clinicRepository = clinicRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(UpdateClinicCommand command, CancellationToken cancellationToken)
@@ -31,6 +33,7 @@ public sealed class UpdateClinicCommandHandler : ICommandHandler<UpdateClinicCom
                 command.Complement, command.City, command.State);
 
             await _clinicRepository.UpdateAsync(clinic, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (IdentityDomainException ex)

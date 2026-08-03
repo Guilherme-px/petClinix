@@ -7,10 +7,12 @@ namespace PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
 public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand, Result>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateUserCommandHandler(IUserRepository userRepository)
+    public UpdateUserCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(UpdateUserCommand command, CancellationToken cancellationToken)
@@ -26,6 +28,7 @@ public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand
         {
             user.UpdatePersonalInfo(command.Name, command.PhoneNumber, command.BirthDate);
             await _userRepository.UpdateAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (IdentityDomainException ex)
