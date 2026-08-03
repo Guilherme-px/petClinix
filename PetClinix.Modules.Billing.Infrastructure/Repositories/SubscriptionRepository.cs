@@ -24,4 +24,15 @@ public class SubscriptionRepository : ISubscriptionRepository
     {
         return await _context.Subscriptions.FirstOrDefaultAsync(s => s.ClinicId == clinicId, cancellationToken);
     }
+
+    public async Task<Subscription?> GetByStripeSubscriptionIdAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Subscriptions.FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId, cancellationToken);
+    }
+
+    public async Task UpdateAsync(Subscription subscription, CancellationToken cancellationToken = default)
+    {
+        _context.Subscriptions.Update(subscription);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

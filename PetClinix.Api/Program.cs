@@ -9,6 +9,7 @@ using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Application.UseCases.CreateCheckoutSession;
 using PetClinix.Modules.Billing.Application.UseCases.CreatePortalSession;
+using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
 using PetClinix.Modules.Billing.Domain.Interfaces;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Billing.Infrastructure.Repositories;
@@ -77,6 +78,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateUserCommand, Result>, UpdateUse
 builder.Services.AddScoped<ICommandHandler<UpdateClinicCommand, Result>, UpdateClinicCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, UpdateAccountCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada.");

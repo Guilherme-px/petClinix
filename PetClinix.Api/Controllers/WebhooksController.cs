@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
+using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
 using Stripe;
 using Stripe.Checkout;
 
@@ -14,14 +15,17 @@ public class WebhooksController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly ICommandHandler<ActivateSubscriptionCommand, Result> _activateHandler;
     private readonly ILogger<WebhooksController> _logger;
+    private readonly ICommandHandler<CancelSubscriptionCommand, Result> _cancelHandler;
 
     public WebhooksController(
         IConfiguration configuration,
         ICommandHandler<ActivateSubscriptionCommand, Result> activateHandler,
+        ICommandHandler<CancelSubscriptionCommand, Result> cancelHandler,
         ILogger<WebhooksController> logger)
     {
         _configuration = configuration;
         _activateHandler = activateHandler;
+        _cancelHandler = cancelHandler;
         _logger = logger;
     }
 
@@ -69,6 +73,25 @@ public class WebhooksController : ControllerBase
             else
             {
                 _logger.LogWarning("Webhook recebido, mas faltam dados do checkout.");
+            }
+        }
+        else if (stripeEvent.Type == EventTypes.CustomerSubscriptionDeleted) 
+        {
+            var subscription = stripeEvent.Data.Object as Stripe.Subscription;
+            var stripeSubscriptionId = subscription?.Id;
+
+            if (!string.IsNullOrEmpty(stripeSubscriptionId))
+            {
+                _logger.LogInformation("❌ Assinatura cancelada no Stripe: {SubscriptionId}", stripeSubscriptionId);
+
+                var command = new CancelSubscriptionCommand(stripeSubscriptionId);
+                var result = await _cancelHandler.Handle(command, HttpContext.RequestAborted);
+
+                if (result.IsFailure)
+                {
+                    _logger.LogError("Erro ao cancelar assinatura no banco: {ErrorMessage}", result.ErrorMessage);
+                    return StatusCode(500, new { error = "Failed to cancel subscription" });
+                }
             }
         }
         else
