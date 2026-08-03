@@ -19,6 +19,7 @@ public class LoginCommandHandlerTests
     private readonly IJwtTokenGenerator _jwtTokenGeneratorMock;
     private readonly LoginCommandHandler _handler;
     private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly ISubscriptionStatusService _subscriptionStatusServiceMock;
 
     public LoginCommandHandlerTests()
     {
@@ -26,8 +27,9 @@ public class LoginCommandHandlerTests
         _passwordHasherMock = Substitute.For<IPasswordHasher>();
         _jwtTokenGeneratorMock = Substitute.For<IJwtTokenGenerator>();
         _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _subscriptionStatusServiceMock = Substitute.For<ISubscriptionStatusService>();
 
-        _handler = new LoginCommandHandler(_userRepositoryMock, _passwordHasherMock, _jwtTokenGeneratorMock, _unitOfWorkMock);
+        _handler = new LoginCommandHandler(_userRepositoryMock, _passwordHasherMock, _jwtTokenGeneratorMock, _unitOfWorkMock, _subscriptionStatusServiceMock);
     }
 
     private static User CreateValidUser(string? passwordHash = "valid_hash")
@@ -86,6 +88,25 @@ public class LoginCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_Should_ReturnFailure_When_Subscription_Is_Inactive()
+    {
+        var command = new LoginCommand("admin@teste.com", "senha_correta");
+        var user = CreateValidUser("valid_hash");
+
+        _userRepositoryMock.GetByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(user);
+        _passwordHasherMock.Verify(command.Password, user.PasswordHash!).Returns(true);
+
+        _subscriptionStatusServiceMock.IsClinicActiveAsync(user.ClinicId, Arg.Any<CancellationToken>()).Returns(false);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.ErrorCode.Should().Be("auth.subscription_inactive");
+
+        _jwtTokenGeneratorMock.DidNotReceive().GenerateToken(Arg.Any<User>());
+    }
+
+    [Fact]
     public async Task Handle_Should_ReturnSuccess_And_Token_When_Valid()
     {
         var command = new LoginCommand("admin@teste.com", "senha_correta");
@@ -94,6 +115,9 @@ public class LoginCommandHandlerTests
 
         _userRepositoryMock.GetByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(user);
         _passwordHasherMock.Verify(command.Password, user.PasswordHash!).Returns(true);
+
+        _subscriptionStatusServiceMock.IsClinicActiveAsync(user.ClinicId, Arg.Any<CancellationToken>()).Returns(true);
+
         _jwtTokenGeneratorMock.GenerateToken(user).Returns(fakeToken);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -105,5 +129,7 @@ public class LoginCommandHandlerTests
 
         _jwtTokenGeneratorMock.Received(1).GenerateToken(user);
         await _userRepositoryMock.Received(1).UpdateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _subscriptionStatusServiceMock.Received(1).IsClinicActiveAsync(user.ClinicId, Arg.Any<CancellationToken>());
     }
 }
