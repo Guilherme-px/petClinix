@@ -38,6 +38,5 @@ public class ClinicRepository : IClinicRepository
     public async Task UpdateAsync(Clinic clinic, CancellationToken cancellationToken = default)
     {
         _context.Clinics.Update(clinic);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 }
