@@ -5,6 +5,9 @@ using Xunit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
+using PetClinix.Modules.Billing.Domain.Entities;
+using PetClinix.Modules.Billing.Domain.Enums;
+using PetClinix.Modules.Billing.Infrastructure.Persistence;
 
 namespace PetClinix.IntegrationTests.Controllers;
 
@@ -50,6 +53,17 @@ public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplication
         {
             var error = await clinicResponse.Content.ReadAsStringAsync();
             throw new Exception($"Falha ao cadastrar clínica no setup do teste: {error}");
+        }
+
+        var clinicResult = await clinicResponse.Content.ReadFromJsonAsync<RegisterClinicResponse>();
+        var clinicId = clinicResult!.ClinicId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var billingDb = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
+            var subscription = Subscription.Create(clinicId, $"cus_test_{Guid.NewGuid()}", $"sub_test_{Guid.NewGuid()}");
+            await billingDb.Subscriptions.AddAsync(subscription);
+            await billingDb.SaveChangesAsync();
         }
 
         var tokenResponse = await _client.GetAsync($"/api/users/{email}/generate-reset-token");
@@ -334,6 +348,7 @@ public class RefreshTokenResponse
     public string Token { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
 }
+
 
 public class ProfileResponse
 {
