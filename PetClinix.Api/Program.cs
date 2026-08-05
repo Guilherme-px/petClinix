@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using PetClinix.Api.Middlewares;
+using PetClinix.Api.Services;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
@@ -29,6 +30,7 @@ using PetClinix.Modules.Identity.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Services;
 using System.Text;
 using System.Threading.RateLimiting;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +82,14 @@ builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, Update
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
 builder.Services.AddScoped<PetClinix.Modules.Identity.Application.Contracts.ISubscriptionStatusService, PetClinix.Modules.Billing.Infrastructure.Services.SubscriptionStatusService>();
+
+builder.Services.Configure<ResendClientOptions>(opt =>
+{
+    opt.ApiToken = builder.Configuration["Resend:ApiKey"]
+        ?? throw new InvalidOperationException("Resend ApiKey não configurada.");
+});
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada.");

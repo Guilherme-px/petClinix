@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
+using PetClinix.Modules.Identity.Domain.Repositories;
+using PetClinix.Modules.Identity.Domain.ValueObjects;
 using Stripe;
 using Stripe.Checkout;
 
@@ -14,18 +16,27 @@ public class WebhooksController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly ICommandHandler<ActivateSubscriptionCommand, Result> _activateHandler;
-    private readonly ILogger<WebhooksController> _logger;
     private readonly ICommandHandler<CancelSubscriptionCommand, Result> _cancelHandler;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<WebhooksController> _logger;
 
     public WebhooksController(
         IConfiguration configuration,
         ICommandHandler<ActivateSubscriptionCommand, Result> activateHandler,
         ICommandHandler<CancelSubscriptionCommand, Result> cancelHandler,
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        IEmailService emailService,
         ILogger<WebhooksController> logger)
     {
         _configuration = configuration;
         _activateHandler = activateHandler;
         _cancelHandler = cancelHandler;
+        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -53,18 +64,33 @@ public class WebhooksController : ControllerBase
             var session = stripeEvent.Data.Object as Session;
 
             var clinicId = session?.ClientReferenceId;
-
             var stripeCustomerId = session?.CustomerId;
             var stripeSubscriptionId = session?.SubscriptionId;
+            var adminEmail = session?.CustomerEmail;
 
             if (Guid.TryParse(clinicId, out var parsedClinicId) && !string.IsNullOrEmpty(stripeCustomerId) && !string.IsNullOrEmpty(stripeSubscriptionId))
             {
-                _logger.LogInformation("Pagamento aprovado para a clínica ID: {ClinicId}", parsedClinicId);
+                _logger.LogInformation("✅ Pagamento aprovado para a clínica ID: {ClinicId}", parsedClinicId);
 
                 var command = new ActivateSubscriptionCommand(parsedClinicId, stripeCustomerId, stripeSubscriptionId);
                 var result = await _activateHandler.Handle(command, HttpContext.RequestAborted);
 
-                if (result.IsFailure)
+                if (result.IsSuccess && !string.IsNullOrEmpty(adminEmail))
+                {
+                    var emailVo = Email.Create(adminEmail);
+                    var adminUser = await _userRepository.GetByEmailAsync(emailVo, HttpContext.RequestAborted);
+
+                    if (adminUser != null && adminUser.PasswordHash == null)
+                    {
+                        var token = adminUser.GeneratePasswordResetToken();
+
+                        await _userRepository.UpdateAsync(adminUser, HttpContext.RequestAborted);
+                        await _unitOfWork.SaveChangesAsync(HttpContext.RequestAborted);
+
+                        await _emailService.SendWelcomeEmailAsync(adminUser.Email.Value, adminUser.Name, token, HttpContext.RequestAborted);
+                    }
+                }
+                else if (result.IsFailure)
                 {
                     _logger.LogError("Erro ao ativar assinatura: {ErrorMessage}", result.ErrorMessage);
                     return StatusCode(500, new { error = "Failed to activate subscription" });
@@ -75,7 +101,7 @@ public class WebhooksController : ControllerBase
                 _logger.LogWarning("Webhook recebido, mas faltam dados do checkout.");
             }
         }
-        else if (stripeEvent.Type == EventTypes.CustomerSubscriptionDeleted) 
+        else if (stripeEvent.Type == EventTypes.CustomerSubscriptionDeleted)
         {
             var subscription = stripeEvent.Data.Object as Stripe.Subscription;
             var stripeSubscriptionId = subscription?.Id;
