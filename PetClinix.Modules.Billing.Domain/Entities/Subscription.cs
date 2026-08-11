@@ -11,22 +11,24 @@ public sealed class Subscription : AggregateRoot
     public SubscriptionStatus Status { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? UpdatedAtUtc { get; private set; }
+    public PlanTier PlanTier { get; private set; }
 
     private Subscription() { }
 
-    private Subscription(Guid clinicId, string stripeCustomerId, string stripeSubscriptionId, SubscriptionStatus status)
+    private Subscription(Guid clinicId, string stripeCustomerId, string stripeSubscriptionId, PlanTier planTier, SubscriptionStatus status)
     {
         Id = Guid.NewGuid();
         ClinicId = clinicId;
         StripeCustomerId = stripeCustomerId;
         StripeSubscriptionId = stripeSubscriptionId;
+        PlanTier = planTier;
         Status = status;
         CreatedAtUtc = DateTime.UtcNow;
     }
 
-    public static Subscription Create(Guid clinicId, string stripeCustomerId, string stripeSubscriptionId)
+    public static Subscription Create(Guid clinicId, string stripeCustomerId, string stripeSubscriptionId, PlanTier planTier)
     {
-        return new Subscription(clinicId, stripeCustomerId, stripeSubscriptionId, SubscriptionStatus.Active);
+        return new Subscription(clinicId, stripeCustomerId, stripeSubscriptionId, planTier, SubscriptionStatus.Active);
     }
 
     public void MarkAsCanceled()

@@ -72,7 +72,7 @@ public class WebhooksController : ControllerBase
             {
                 _logger.LogInformation("✅ Pagamento aprovado para a clínica ID: {ClinicId}", parsedClinicId);
 
-                var command = new ActivateSubscriptionCommand(parsedClinicId, stripeCustomerId, stripeSubscriptionId);
+                var command = new ActivateSubscriptionCommand(parsedClinicId, stripeCustomerId, stripeSubscriptionId, PetClinix.Modules.Billing.Domain.Enums.PlanTier.Basic);
                 var result = await _activateHandler.Handle(command, HttpContext.RequestAborted);
 
                 if (result.IsSuccess && !string.IsNullOrEmpty(adminEmail))

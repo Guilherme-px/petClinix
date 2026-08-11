@@ -12,4 +12,5 @@ public interface IUserRepository
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task<User?> GetByRefreshTokenAsync(string token, CancellationToken cancellationToken = default);
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<int> CountByClinicIdAsync(Guid clinicId, CancellationToken cancellationToken = default);
 }

@@ -22,10 +22,7 @@ public sealed class ActivateSubscriptionCommandHandler : ICommandHandler<Activat
             return Result.Success();
         }
 
-        var subscription = Subscription.Create(
-            command.ClinicId,
-            command.StripeCustomerId,
-            command.StripeSubscriptionId);
+        var subscription = Subscription.Create(command.ClinicId, command.StripeCustomerId, command.StripeSubscriptionId, command.PlanTier);
 
         await _subscriptionRepository.AddAsync(subscription, cancellationToken);
 

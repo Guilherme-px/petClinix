@@ -49,4 +49,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
+
+    public async Task<int> CountByClinicIdAsync(Guid clinicId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users.CountAsync(u => u.ClinicId == clinicId, cancellationToken);
+    }
 }

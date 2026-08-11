@@ -23,4 +23,21 @@ public class SubscriptionStatusService : ISubscriptionStatusService
 
         return subscription.Status == SubscriptionStatus.Active;
     }
+
+    public async Task<int> GetStaffLimitAsync(Guid clinicId, CancellationToken cancellationToken = default)
+    {
+        var subscription = await _context.Subscriptions
+            .FirstOrDefaultAsync(s => s.ClinicId == clinicId, cancellationToken);
+
+        if (subscription == null || subscription.Status != SubscriptionStatus.Active)
+            return 0;
+
+        return subscription.PlanTier switch
+        {
+            PlanTier.Basic => 4,
+            PlanTier.Intermediate => 8,
+            PlanTier.Enterprise => int.MaxValue,
+            _ => 0
+        };
+    }
 }
