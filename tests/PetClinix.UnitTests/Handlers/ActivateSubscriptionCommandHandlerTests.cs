@@ -3,6 +3,7 @@ using NSubstitute;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Domain.Entities;
 using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Enums;
 using Xunit;
 
 namespace PetClinix.UnitTests.Handlers;
@@ -21,7 +22,8 @@ public class ActivateSubscriptionCommandHandlerTests
     private static ActivateSubscriptionCommand CreateValidCommand() => new(
         Guid.NewGuid(),
         "cus_test_123",
-        "sub_test_456");
+        "sub_test_456",
+        PlanTier.Basic);
 
     [Fact]
     public async Task Handle_Should_Create_Subscription_When_Not_Exists()
@@ -35,19 +37,19 @@ public class ActivateSubscriptionCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await _subscriptionRepositoryMock.Received(1)
-            .AddAsync(Arg.Is<Subscription>(s =>
-                s != null &&
-                s.ClinicId == command.ClinicId &&
-                s.StripeSubscriptionId == command.StripeSubscriptionId),
-                Arg.Any<CancellationToken>());
+        await _subscriptionRepositoryMock.Received(1).AddAsync(Arg.Is<Subscription>(s =>
+            s != null &&
+            s.ClinicId == command.ClinicId &&
+            s.StripeSubscriptionId == command.StripeSubscriptionId &&
+            s.PlanTier == PlanTier.Basic),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_Should_Not_Create_Subscription_When_Already_Exists()
     {
         var command = CreateValidCommand();
-        var existingSubscription = Subscription.Create(command.ClinicId, command.StripeCustomerId, command.StripeSubscriptionId);
+        var existingSubscription = Subscription.Create(command.ClinicId, command.StripeCustomerId, command.StripeSubscriptionId, PlanTier.Basic);
 
         _subscriptionRepositoryMock
             .GetByClinicIdAsync(command.ClinicId, Arg.Any<CancellationToken>())
