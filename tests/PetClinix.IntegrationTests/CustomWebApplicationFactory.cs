@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
+using PetClinix.BuildingBlocks.Application;
 using Testcontainers.PostgreSql;
 
 namespace PetClinix.IntegrationTests;
@@ -54,6 +55,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
             identityDb.Database.Migrate();
             billingDb.Database.Migrate();
+
+            var emailServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
+            if (emailServiceDescriptor != null)
+            {
+                services.Remove(emailServiceDescriptor);
+            }
+            services.AddScoped<IEmailService, TestEmailService>();
         });
     }
 
