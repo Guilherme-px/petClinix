@@ -24,6 +24,7 @@ using PetClinix.Modules.Identity.Application.UseCases.GetProfile;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateProfile;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateAccount;
+using PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Repositories;
@@ -82,6 +83,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, Update
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
 builder.Services.AddScoped<PetClinix.Modules.Identity.Application.Contracts.ISubscriptionStatusService, PetClinix.Modules.Billing.Infrastructure.Services.SubscriptionStatusService>();
+builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result>, RegisterStaffCommandHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
