@@ -122,7 +122,8 @@ tests/
 - **Testes:** xUnit, NSubstitute, FluentAssertions, Testcontainers
 - **Documentação da API:** Swagger / OpenAPI
 - **Pagamentos:** Stripe API (Checkout & Webhooks)
-- **Segurança:** JWT Authentication, Refresh Tokens, Rate Limiting, CORS
+- **Segurança:** JWT Authentication, Refresh Tokens, Role-Based Access Control (RBAC), Rate Limiting, CORS
+- **Emails:** Resend API (Welcome & Password Reset flows)
 
 ---
 
@@ -156,6 +157,10 @@ Antes de começar, garanta que você tenha o seguinte instalado em sua máquina:
    - Necessário para testar o fluxo de pagamento de assinaturas e os webhooks localmente..
    - Guia de instalação: [https://stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
 
+5. **Conta no Resend**
+   - Necessário para enviar e-mails reais de boas-vindas e redefinição de senha.
+   - Crie uma conta gratuita em [https://resend.com](https://resend.com) e obtenha sua chave de API.
+
 ---
 
 ## Iniciando
@@ -187,6 +192,9 @@ Crie o arquivo `PetClinix.Api/appsettings.Development.json` e adicione sua strin
     "Issuer": "PetClinix",
     "Audience": "PetClinixUsers",
     "ExpiryMinutes": 60
+  },
+   "Resend": {
+    "ApiKey": "re_SUA_CHAVE_DA_API_DO_RESEND"
   }
 }
 ```
@@ -259,6 +267,9 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Hardening da API: Rate Limiting, CORS e Tratamento Global de Erros
 - [x] Operações Atômicas no Banco de Dados (Padrão Unit of Work)
 - [x] Suíte Abrangente de Testes (Testes Unitários com NSubstitute e Testes de Integração E2E com Testcontainers)
+- [x] Rotas Protegidas e Autorização Baseada em Funções (RBAC)
+- [x] Portal de Cobrança do Stripe e Tratamento de Cancelamento de Assinatura
+- [x] Integração de E-mail (Resend) para Boas-vindas e Redefinição de Senha
 - [ ] Módulo de gerenciamento de funcionários
 - [ ] Módulo de cadastro de Pets e Tutores
 - [ ] Agendamento e fluxos de trabalho clínicos

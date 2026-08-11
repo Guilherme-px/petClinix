@@ -121,7 +121,8 @@ tests/
 - **Testing:** xUnit, NSubstitute, FluentAssertions, Testcontainers
 - **API Documentation:** Swagger / OpenAPI
 - **Payments:** Stripe API (Checkout & Webhooks)
-- **Security:** JWT Authentication, Refresh Tokens, Rate Limiting, CORS
+- **Security:** JWT Authentication, Refresh Tokens, Role-Based Access Control (RBAC), Rate Limiting, CORS
+- **Emails:** Resend API (Welcome & Password Reset flows)
 
 ---
 
@@ -155,6 +156,10 @@ Before you begin, ensure you have the following installed on your machine:
    - Required to test the subscription payment flow and webhooks locally.
    - Installation guide: [https://stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
 
+5. **Resend Account**
+   - Required to send real welcome and password reset emails.
+   - Sign up for free at [https://resend.com](https://resend.com) and get your API key.
+
 ---
 
 ## Getting Started
@@ -186,6 +191,9 @@ Create the file `PetClinix.Api/appsettings.Development.json` and add your connec
     "Issuer": "PetClinix",
     "Audience": "PetClinixUsers",
     "ExpiryMinutes": 60
+  },
+   "Resend": {
+    "ApiKey": "re_YOUR_RESEND_API_KEY"
   }
 }
 ```
@@ -258,6 +266,9 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] API Hardening: Rate Limiting, CORS & Global Exception Handling
 - [x] Atomic Database Operations (Unit of Work pattern)
 - [x] Comprehensive Testing Suite (Unit tests with NSubstitute & E2E Integration tests with Testcontainers)
+- [x] Protected Routes & Role-based Authorization (RBAC)
+- [x] Stripe Billing Portal & Subscription Cancellation Handling
+- [x] Email Integration (Resend) for Welcome & Password Reset
 - [ ] Employee management module
 - [ ] Pet & Tutor registration module
 - [ ] Scheduling and clinical workflows
