@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
+using PetClinix.Modules.Identity.Application.UseCases.GetStaff;
 using PetClinix.Modules.Identity.Domain.Enums;
 using System.Security.Claims;
 
@@ -14,11 +15,19 @@ public class ClinicsController : ControllerBase
 {
     private readonly ICommandHandler<UpdateClinicCommand, Result> _updateClinicHandler;
     private readonly ICommandHandler<RegisterStaffCommand, Result> _registerStaffHandler;
+    private readonly ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>> _getStaffHandler;
+    private readonly ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> _getStaffByIdHandler;
 
-    public ClinicsController(ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler, ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler)
+    public ClinicsController(
+        ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler,
+        ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler,
+        ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>> getStaffHandler,
+        ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler)
     {
         _updateClinicHandler = updateClinicHandler;
         _registerStaffHandler = registerStaffHandler;
+        _getStaffHandler = getStaffHandler;
+        _getStaffByIdHandler = getStaffByIdHandler;
     }
 
     [Authorize(Roles = "Admin")]
@@ -77,6 +86,43 @@ public class ClinicsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("me/staff")]
+    public async Task<IActionResult> GetStaff(CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetStaffQuery(clinicId);
+        var result = await _getStaffHandler.Handle(query, cancellationToken);
+
+        return Ok(result.Value);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("me/staff/{userId}")]
+    public async Task<IActionResult> GetStaffById(Guid userId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetStaffByIdQuery(clinicId, userId);
+        var result = await _getStaffByIdHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return Ok(result.Value);
     }
 }
 

@@ -54,4 +54,12 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.CountAsync(u => u.ClinicId == clinicId, cancellationToken);
     }
+
+    public async Task<List<User>> GetAllByClinicIdAsync(Guid clinicId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+        .Where(u => u.ClinicId == clinicId)
+        .OrderBy(u => u.Name)
+        .ToListAsync(cancellationToken);
+    }
 }
