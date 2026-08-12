@@ -4,6 +4,7 @@ using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
 using PetClinix.Modules.Identity.Application.UseCases.GetStaff;
+using PetClinix.Modules.Identity.Application.UseCases.UpdateStaff;
 using PetClinix.Modules.Identity.Domain.Enums;
 using System.Security.Claims;
 
@@ -17,17 +18,20 @@ public class ClinicsController : ControllerBase
     private readonly ICommandHandler<RegisterStaffCommand, Result> _registerStaffHandler;
     private readonly ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> _getStaffHandler;
     private readonly ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> _getStaffByIdHandler;
+    private readonly ICommandHandler<UpdateStaffCommand, Result> _updateStaffHandler;
 
     public ClinicsController(
         ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler,
         ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler,
         ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> getStaffHandler,
-        ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler)
+        ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler,
+        ICommandHandler<UpdateStaffCommand, Result> updateStaffHandler)
     {
         _updateClinicHandler = updateClinicHandler;
         _registerStaffHandler = registerStaffHandler;
         _getStaffHandler = getStaffHandler;
         _getStaffByIdHandler = getStaffByIdHandler;
+        _updateStaffHandler = updateStaffHandler;
     }
 
     [Authorize(Roles = "Admin")]
@@ -124,6 +128,32 @@ public class ClinicsController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPut("me/staff/{userId}")]
+    public async Task<IActionResult> UpdateStaff(Guid userId, [FromBody] UpdateStaffRequest request, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        if (!Enum.TryParse<UserRole>(request.Role, true, out var role) || role == UserRole.Admin)
+        {
+            return BadRequest(new { error = "invalid_role", message = "Role inválida. Use Veterinarian ou Receptionist." });
+        }
+
+        var command = new UpdateStaffCommand(clinicId, userId, request.Name, request.PhoneNumber, request.BirthDate, role);
+        var result = await _updateStaffHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record UpdateClinicRequest(
@@ -135,3 +165,6 @@ public record UpdateClinicRequest(
 public record RegisterStaffRequest(
     string Name, string Email, string DocumentNumber,
     string PhoneNumber, DateOnly BirthDate, string Role);
+
+public record UpdateStaffRequest(
+    string Name, string PhoneNumber, DateOnly BirthDate, string Role);

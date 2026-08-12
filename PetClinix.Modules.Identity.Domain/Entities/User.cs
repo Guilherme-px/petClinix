@@ -151,4 +151,15 @@ public sealed class User : AggregateRoot
         PhoneNumber = PhoneNumber.Create(phoneNumber);
         BirthDate = birthDate;
     }
+
+    public void UpdateStaffInfo(string name, string phoneNumber, DateOnly birthDate, UserRole role)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new IdentityDomainException("identity.user.name_required", "O nome do usuário é obrigatório.");
+
+        Name = name.Trim();
+        PhoneNumber = PhoneNumber.Create(phoneNumber);
+        BirthDate = birthDate;
+        Role = role;
+    }
 }
