@@ -166,4 +166,63 @@ public class StaffControllerIntegrationTests : IClassFixture<CustomWebApplicatio
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task GetStaff_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.GetAsync("/api/clinics/me/staff");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetStaff_Should_Return_200_And_Staff_List_When_Valid()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var response = await _client.GetAsync("/api/clinics/me/staff");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedStaffResponse>();
+        result.Should().NotBeNull();
+        result!.Items.Should().NotBeEmpty();
+        result.TotalCount.Should().BeGreaterThanOrEqualTo(1);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task GetStaffById_Should_Return_404_When_User_Does_Not_Exist()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var fakeUserId = Guid.NewGuid();
+        var response = await _client.GetAsync($"/api/clinics/me/staff/{fakeUserId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+}
+
+public class StaffItemResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+}
+
+public class PagedStaffResponse
+{
+    public List<StaffItemResponse> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
 }
