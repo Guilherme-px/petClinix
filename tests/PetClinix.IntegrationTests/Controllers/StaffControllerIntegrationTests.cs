@@ -210,6 +210,101 @@ public class StaffControllerIntegrationTests : IClassFixture<CustomWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateStaff_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            Name = "Nome Novo",
+            PhoneNumber = "11912345678",
+            BirthDate = new DateOnly(1990, 1, 1),
+            Role = "Veterinarian"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/clinics/me/staff/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateStaff_Should_Return_NotFound_When_User_Does_Not_Exist()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            Name = "Nome Novo",
+            PhoneNumber = "11912345678",
+            BirthDate = new DateOnly(1990, 1, 1),
+            Role = "Veterinarian"
+        };
+
+        var fakeUserId = Guid.NewGuid();
+        var response = await _client.PutAsJsonAsync($"/api/clinics/me/staff/{fakeUserId}", updateRequest);
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateStaff_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var staffEmail = $"vet_{Guid.NewGuid()}@teste.com";
+        var staffRequest = new
+        {
+            Name = "Dr. Original",
+            Email = staffEmail,
+            DocumentNumber = "98765432100",
+            PhoneNumber = "11988887777",
+            BirthDate = new DateOnly(1985, 5, 10),
+            Role = "Veterinarian"
+        };
+        await _client.PostAsJsonAsync("/api/clinics/me/staff", staffRequest);
+
+        Guid staffUserId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var emailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create(staffEmail);
+            var savedUser = await db.Users.FirstOrDefaultAsync(u => u.Email == emailVo);
+            staffUserId = savedUser!.Id;
+        }
+
+        var updateRequest = new
+        {
+            Name = "Dr. Atualizado",
+            PhoneNumber = "11900000000",
+            BirthDate = new DateOnly(1986, 6, 11),
+            Role = "Receptionist"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/clinics/me/staff/{staffUserId}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var updatedUser = await db.Users.FirstOrDefaultAsync(u => u.Id == staffUserId);
+
+            updatedUser.Should().NotBeNull();
+            updatedUser!.Name.Should().Be("Dr. Atualizado");
+            updatedUser.Role.Should().Be(UserRole.Receptionist);
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class StaffItemResponse
