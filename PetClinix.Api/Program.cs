@@ -85,7 +85,7 @@ builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<Cr
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
 builder.Services.AddScoped<PetClinix.Modules.Identity.Application.Contracts.ISubscriptionStatusService, PetClinix.Modules.Billing.Infrastructure.Services.SubscriptionStatusService>();
 builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result>, RegisterStaffCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>>, GetStaffQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>>, GetStaffQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>>, GetStaffByIdQueryHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>

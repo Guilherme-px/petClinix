@@ -55,11 +55,19 @@ public class UserRepository : IUserRepository
         return await _context.Users.CountAsync(u => u.ClinicId == clinicId, cancellationToken);
     }
 
-    public async Task<List<User>> GetAllByClinicIdAsync(Guid clinicId, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<User> Users, int TotalCount)> GetAllByClinicIdAsync(Guid clinicId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
+        var query = _context.Users
         .Where(u => u.ClinicId == clinicId)
-        .OrderBy(u => u.Name)
+        .OrderBy(u => u.Name);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var users = await query
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
         .ToListAsync(cancellationToken);
+
+        return (users, totalCount);
     }
 }

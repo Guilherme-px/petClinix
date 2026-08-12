@@ -3,7 +3,7 @@ using PetClinix.Modules.Identity.Domain.Repositories;
 
 namespace PetClinix.Modules.Identity.Application.UseCases.GetStaff;
 
-public sealed class GetStaffQueryHandler : ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>>
+public sealed class GetStaffQueryHandler : ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>>
 {
     private readonly IUserRepository _userRepository;
 
@@ -12,9 +12,9 @@ public sealed class GetStaffQueryHandler : ICommandHandler<GetStaffQuery, Result
         _userRepository = userRepository;
     }
 
-    public async Task<Result<List<StaffResponse>>> Handle(GetStaffQuery query, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<StaffResponse>>> Handle(GetStaffQuery query, CancellationToken cancellationToken)
     {
-        var users = await _userRepository.GetAllByClinicIdAsync(query.ClinicId, cancellationToken);
+        var (users, totalCount) = await _userRepository.GetAllByClinicIdAsync(query.ClinicId, query.PageNumber, query.PageSize, cancellationToken);
 
         var response = users.Select(u => new StaffResponse(
             u.Id,
@@ -26,6 +26,8 @@ public sealed class GetStaffQueryHandler : ICommandHandler<GetStaffQuery, Result
             u.Role,
             u.IsActive)).ToList();
 
-        return Result<List<StaffResponse>>.Success(response);
+        var pagedResult = new PagedResult<StaffResponse>(response, totalCount, query.PageNumber, query.PageSize);
+
+        return Result<PagedResult<StaffResponse>>.Success(pagedResult);
     }
 }

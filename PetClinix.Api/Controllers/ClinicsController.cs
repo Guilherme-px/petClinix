@@ -15,13 +15,13 @@ public class ClinicsController : ControllerBase
 {
     private readonly ICommandHandler<UpdateClinicCommand, Result> _updateClinicHandler;
     private readonly ICommandHandler<RegisterStaffCommand, Result> _registerStaffHandler;
-    private readonly ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>> _getStaffHandler;
+    private readonly ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> _getStaffHandler;
     private readonly ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> _getStaffByIdHandler;
 
     public ClinicsController(
         ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler,
         ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler,
-        ICommandHandler<GetStaffQuery, Result<List<StaffResponse>>> getStaffHandler,
+        ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> getStaffHandler,
         ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler)
     {
         _updateClinicHandler = updateClinicHandler;
@@ -90,7 +90,7 @@ public class ClinicsController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpGet("me/staff")]
-    public async Task<IActionResult> GetStaff(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetStaff([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1, CancellationToken cancellationToken = default)
     {
         var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
         if (!Guid.TryParse(clinicIdClaim, out var clinicId))
@@ -98,7 +98,7 @@ public class ClinicsController : ControllerBase
             return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
         }
 
-        var query = new GetStaffQuery(clinicId);
+        var query = new GetStaffQuery(clinicId, pageNumber, pageSize);
         var result = await _getStaffHandler.Handle(query, cancellationToken);
 
         return Ok(result.Value);
