@@ -5,6 +5,7 @@ using PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
 using PetClinix.Modules.Identity.Application.UseCases.GetStaff;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateStaff;
+using PetClinix.Modules.Identity.Application.UseCases.DeactivateStaff;
 using PetClinix.Modules.Identity.Domain.Enums;
 using System.Security.Claims;
 
@@ -19,19 +20,22 @@ public class ClinicsController : ControllerBase
     private readonly ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> _getStaffHandler;
     private readonly ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> _getStaffByIdHandler;
     private readonly ICommandHandler<UpdateStaffCommand, Result> _updateStaffHandler;
+    private readonly ICommandHandler<DeactivateStaffCommand, Result> _deactivateStaffHandler;
 
     public ClinicsController(
         ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler,
         ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler,
         ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> getStaffHandler,
         ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler,
-        ICommandHandler<UpdateStaffCommand, Result> updateStaffHandler)
+        ICommandHandler<UpdateStaffCommand, Result> updateStaffHandler,
+         ICommandHandler<DeactivateStaffCommand, Result> deactivateStaffHandler)
     {
         _updateClinicHandler = updateClinicHandler;
         _registerStaffHandler = registerStaffHandler;
         _getStaffHandler = getStaffHandler;
         _getStaffByIdHandler = getStaffByIdHandler;
         _updateStaffHandler = updateStaffHandler;
+        _deactivateStaffHandler = deactivateStaffHandler;
     }
 
     [Authorize(Roles = "Admin")]
@@ -146,6 +150,27 @@ public class ClinicsController : ControllerBase
 
         var command = new UpdateStaffCommand(clinicId, userId, request.Name, request.PhoneNumber, request.BirthDate, role);
         var result = await _updateStaffHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("me/staff/{userId}")]
+    public async Task<IActionResult> DeactivateStaff(Guid userId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var command = new DeactivateStaffCommand(clinicId, userId);
+        var result = await _deactivateStaffHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)
         {

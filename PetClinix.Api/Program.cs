@@ -26,6 +26,7 @@ using PetClinix.Modules.Identity.Application.UseCases.UpdateClinic;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateAccount;
 using PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 using PetClinix.Modules.Identity.Application.UseCases.GetStaff;
+using PetClinix.Modules.Identity.Application.UseCases.DeactivateStaff;
 using PetClinix.Modules.Identity.Application.UseCases.UpdateStaff;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
@@ -89,6 +90,7 @@ builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result>, Regist
 builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>>, GetStaffQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>>, GetStaffByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateStaffCommand, Result>, UpdateStaffCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<DeactivateStaffCommand, Result>, DeactivateStaffCommandHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
