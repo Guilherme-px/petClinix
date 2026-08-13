@@ -305,6 +305,77 @@ public class StaffControllerIntegrationTests : IClassFixture<CustomWebApplicatio
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task DeactivateStaff_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.DeleteAsync($"/api/clinics/me/staff/{Guid.NewGuid()}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task DeactivateStaff_Should_Return_NotFound_When_User_Does_Not_Exist()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var fakeUserId = Guid.NewGuid();
+        var response = await _client.DeleteAsync($"/api/clinics/me/staff/{fakeUserId}");
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task DeactivateStaff_Should_Return_204_And_Set_Inactive_In_Db_When_Valid()
+    {
+        var (email, password) = await SetupAdminWithSubscriptionAsync();
+
+        var loginRequest = new { Email = email, Password = password };
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var staffEmail = $"vet_{Guid.NewGuid()}@teste.com";
+        var staffRequest = new
+        {
+            Name = "Dr. Teste Delete",
+            Email = staffEmail,
+            DocumentNumber = "98765432100",
+            PhoneNumber = "11988887777",
+            BirthDate = new DateOnly(1985, 5, 10),
+            Role = "Veterinarian"
+        };
+        await _client.PostAsJsonAsync("/api/clinics/me/staff", staffRequest);
+
+        Guid staffUserId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var emailVo = PetClinix.Modules.Identity.Domain.ValueObjects.Email.Create(staffEmail);
+            var savedUser = await db.Users.FirstOrDefaultAsync(u => u.Email == emailVo);
+            staffUserId = savedUser!.Id;
+        }
+
+        var response = await _client.DeleteAsync($"/api/clinics/me/staff/{staffUserId}");
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var deactivatedUser = await db.Users.FirstOrDefaultAsync(u => u.Id == staffUserId);
+
+            deactivatedUser.Should().NotBeNull();
+            deactivatedUser!.IsActive.Should().BeFalse();
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class StaffItemResponse
