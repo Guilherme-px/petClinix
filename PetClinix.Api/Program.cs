@@ -32,6 +32,10 @@ using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Repositories;
 using PetClinix.Modules.Identity.Infrastructure.Services;
+using PetClinix.Modules.Pets.Infrastructure.Persistence;
+using PetClinix.Modules.Pets.Infrastructure.Repositories;
+using PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
+using PetClinix.Modules.Pets.Domain.Repositories;
 using System.Text;
 using System.Threading.RateLimiting;
 using Resend;
@@ -66,11 +70,14 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 builder.Services.AddDbContext<BillingDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddDbContext<PetsDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUnitOfWork, PetClinix.Modules.Identity.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<RegisterClinicWithAdminCommand, Result<RegisterClinicWithAdminResponse>>, RegisterClinicWithAdminCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<SetPasswordCommand, Result>, SetPasswordCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<LoginCommand, Result<LoginResponse>>, LoginCommandHandler>();
@@ -91,6 +98,9 @@ builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<PagedResult<Sta
 builder.Services.AddScoped<ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>>, GetStaffByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateStaffCommand, Result>, UpdateStaffCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeactivateStaffCommand, Result>, DeactivateStaffCommandHandler>();
+builder.Services.AddScoped<ITutorRepository, TutorRepository>();
+builder.Services.AddScoped<ICommandHandler<RegisterTutorCommand, Result>, RegisterTutorCommandHandler>();
+builder.Services.AddScoped<PetClinix.Modules.Pets.Application.Contracts.IPetsUnitOfWork, PetClinix.Modules.Pets.Infrastructure.Persistence.UnitOfWork>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {

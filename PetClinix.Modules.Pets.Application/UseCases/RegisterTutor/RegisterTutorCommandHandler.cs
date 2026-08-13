@@ -1,4 +1,5 @@
 using PetClinix.BuildingBlocks.Application;
+using PetClinix.Modules.Pets.Application.Contracts;
 using PetClinix.Modules.Pets.Domain.Entities;
 using PetClinix.Modules.Pets.Domain.Exceptions;
 using PetClinix.Modules.Pets.Domain.Repositories;
@@ -9,9 +10,9 @@ namespace PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
 public sealed class RegisterTutorCommandHandler : ICommandHandler<RegisterTutorCommand, Result>
 {
     private readonly ITutorRepository _tutorRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPetsUnitOfWork _unitOfWork;
 
-    public RegisterTutorCommandHandler(ITutorRepository tutorRepository, IUnitOfWork unitOfWork)
+    public RegisterTutorCommandHandler(ITutorRepository tutorRepository, IPetsUnitOfWork unitOfWork)
     {
         _tutorRepository = tutorRepository;
         _unitOfWork = unitOfWork;
