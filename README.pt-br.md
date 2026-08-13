@@ -270,7 +270,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Rotas Protegidas e Autorização Baseada em Funções (RBAC)
 - [x] Portal de Cobrança do Stripe e Tratamento de Cancelamento de Assinatura
 - [x] Integração de E-mail (Resend) para Boas-vindas e Redefinição de Senha
-- [ ] Módulo de gerenciamento de funcionários
+- [x] Módulo de gerenciamento de funcionários
 - [ ] Módulo de cadastro de Pets e Tutores
 - [ ] Agendamento e fluxos de trabalho clínicos
 

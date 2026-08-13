@@ -269,7 +269,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Protected Routes & Role-based Authorization (RBAC)
 - [x] Stripe Billing Portal & Subscription Cancellation Handling
 - [x] Email Integration (Resend) for Welcome & Password Reset
-- [ ] Employee management module
+- [x] Employee management module
 - [ ] Pet & Tutor registration module
 - [ ] Scheduling and clinical workflows
 
