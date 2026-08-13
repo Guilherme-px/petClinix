@@ -13,4 +13,7 @@
   <Project Path="PetClinix.Modules.Identity.Application/PetClinix.Modules.Identity.Application.csproj" />
   <Project Path="PetClinix.Modules.Identity.Domain/PetClinix.Modules.Identity.Domain.csproj" />
   <Project Path="PetClinix.Modules.Identity.Infrastructure/PetClinix.Modules.Identity.Infrastructure.csproj" />
+  <Project Path="PetClinix.Modules.Pets.Application/PetClinix.Modules.Pets.Application.csproj" />
+  <Project Path="PetClinix.Modules.Pets.Domain/PetClinix.Modules.Pets.Domain.csproj" />
+  <Project Path="PetClinix.Modules.Pets.Infrastructure/PetClinix.Modules.Pets.Infrastructure.csproj" />
 </Solution>
