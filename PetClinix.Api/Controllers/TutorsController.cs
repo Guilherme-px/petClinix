@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
+using PetClinix.Modules.Pets.Application.UseCases.GetTutors;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -12,10 +13,14 @@ namespace PetClinix.Api.Controllers;
 public class TutorsController : ControllerBase
 {
     private readonly ICommandHandler<RegisterTutorCommand, Result> _registerTutorHandler;
+    private readonly ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> _getTutorsHandler;
 
-    public TutorsController(ICommandHandler<RegisterTutorCommand, Result> registerTutorHandler)
+    public TutorsController(
+        ICommandHandler<RegisterTutorCommand, Result> registerTutorHandler,
+        ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> getTutorsHandler)
     {
         _registerTutorHandler = registerTutorHandler;
+        _getTutorsHandler = getTutorsHandler;
     }
 
     [HttpPost]
@@ -43,6 +48,22 @@ public class TutorsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTutors([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetTutorsQuery(clinicId, pageNumber, pageSize);
+        var result = await _getTutorsHandler.Handle(query, cancellationToken);
+
+        return Ok(result.Value);
     }
 }
 

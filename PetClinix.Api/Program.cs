@@ -35,6 +35,7 @@ using PetClinix.Modules.Identity.Infrastructure.Services;
 using PetClinix.Modules.Pets.Infrastructure.Persistence;
 using PetClinix.Modules.Pets.Infrastructure.Repositories;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
+using PetClinix.Modules.Pets.Application.UseCases.GetTutors;
 using PetClinix.Modules.Pets.Domain.Repositories;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -101,6 +102,7 @@ builder.Services.AddScoped<ICommandHandler<DeactivateStaffCommand, Result>, Deac
 builder.Services.AddScoped<ITutorRepository, TutorRepository>();
 builder.Services.AddScoped<ICommandHandler<RegisterTutorCommand, Result>, RegisterTutorCommandHandler>();
 builder.Services.AddScoped<PetClinix.Modules.Pets.Application.Contracts.IPetsUnitOfWork, PetClinix.Modules.Pets.Infrastructure.Persistence.UnitOfWork>();
+builder.Services.AddScoped<ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>>, GetTutorsQueryHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
