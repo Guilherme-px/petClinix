@@ -7,6 +7,7 @@ namespace PetClinix.Modules.Pets.Domain.Entities;
 public sealed class Tutor : AggregateRoot
 {
     public Guid ClinicId { get; private set; }
+    public Guid CreatedByUserId { get; private set; }
     public string Name { get; private set; }
     public Cpf Cpf { get; private set; }
     public string? Email { get; private set; }
@@ -27,7 +28,7 @@ public sealed class Tutor : AggregateRoot
     private Tutor() { }
 
     private Tutor(
-       Guid clinicId, string name, Cpf cpf, string? email, string phoneNumber, string? secondaryPhoneNumber,
+       Guid clinicId, Guid createdByUserId, string name, Cpf cpf, string? email, string phoneNumber, string? secondaryPhoneNumber,
        string zipCode, string street, string number, string neighborhood, string? complement, string city, string state, string? notes)
     {
         if (clinicId == Guid.Empty) throw new PetsDomainException("pets.tutor.clinic_id_required", "Clínica é obrigatória.");
@@ -42,6 +43,7 @@ public sealed class Tutor : AggregateRoot
 
         Id = Guid.NewGuid();
         ClinicId = clinicId;
+        CreatedByUserId = createdByUserId;
         Name = name.Trim();
         Cpf = cpf;
         Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
@@ -60,12 +62,12 @@ public sealed class Tutor : AggregateRoot
     }
 
     public static Tutor Create(
-        Guid clinicId, string name, string cpf, string? email, string phoneNumber, string? secondaryPhoneNumber,
+        Guid clinicId, Guid createdByUserId, string name, string cpf, string? email, string phoneNumber, string? secondaryPhoneNumber,
         string zipCode, string street, string number, string neighborhood, string? complement, string city, string state, string? notes
     )
     {
         return new Tutor(
-            clinicId, name, Cpf.Create(cpf), email, phoneNumber, secondaryPhoneNumber,
+            clinicId, createdByUserId, name, Cpf.Create(cpf), email, phoneNumber, secondaryPhoneNumber,
             zipCode, street, number, neighborhood, complement, city, state, notes
         );
     }

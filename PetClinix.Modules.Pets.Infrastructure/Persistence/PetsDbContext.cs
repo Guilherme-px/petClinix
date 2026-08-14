@@ -32,6 +32,7 @@ public class PetsDbContext : DbContext
             entity.Property(t => t.State).HasMaxLength(100).IsRequired();
             entity.Property(t => t.Notes).HasMaxLength(1000);
             entity.HasIndex(t => new { t.ClinicId, t.Cpf }).IsUnique();
+            entity.Property(t => t.CreatedByUserId).IsRequired();
         });
     }
-} 
+}

@@ -22,15 +22,17 @@ public class TutorsController : ControllerBase
     public async Task<IActionResult> RegisterTutor([FromBody] RegisterTutorRequest request, CancellationToken cancellationToken)
     {
         var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId) || !Guid.TryParse(userIdClaim, out var userId))
         {
             return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
         }
 
         var command = new RegisterTutorCommand(
-            clinicId, request.Name, request.Cpf, request.Email, request.PhoneNumber, request.SecondaryPhoneNumber,
-            request.ZipCode, request.Street, request.Number, request.Neighborhood, request.Complement, request.City, request.State, request.Notes
+            clinicId, userId, request.Name, request.Cpf, request.Email, request.PhoneNumber, request.SecondaryPhoneNumber,
+            request.ZipCode, request.Street, request.Number, request.Neighborhood, request.Complement, request.City,
+            request.State, request.Notes
         );
 
         var result = await _registerTutorHandler.Handle(command, cancellationToken);

@@ -30,8 +30,9 @@ public sealed class RegisterTutorCommandHandler : ICommandHandler<RegisterTutorC
         try
         {
             var tutor = Tutor.Create(
-                command.ClinicId, command.Name, command.Cpf, command.Email, command.PhoneNumber, command.SecondaryPhoneNumber,
-                command.ZipCode, command.Street, command.Number, command.Neighborhood, command.Complement, command.City, command.State, command.Notes
+                command.ClinicId, command.CreatedByUserId, command.Name, command.Cpf, command.Email, command.PhoneNumber, command.SecondaryPhoneNumber,
+                command.ZipCode, command.Street, command.Number, command.Neighborhood, command.Complement, command.City,
+                command.State, command.Notes
             );
 
             await _tutorRepository.AddAsync(tutor, cancellationToken);
