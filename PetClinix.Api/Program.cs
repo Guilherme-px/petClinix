@@ -103,6 +103,7 @@ builder.Services.AddScoped<ITutorRepository, TutorRepository>();
 builder.Services.AddScoped<ICommandHandler<RegisterTutorCommand, Result>, RegisterTutorCommandHandler>();
 builder.Services.AddScoped<PetClinix.Modules.Pets.Application.Contracts.IPetsUnitOfWork, PetClinix.Modules.Pets.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>>, GetTutorsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>>, GetTutorByIdQueryHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {

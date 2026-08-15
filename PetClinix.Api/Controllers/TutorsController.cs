@@ -14,13 +14,16 @@ public class TutorsController : ControllerBase
 {
     private readonly ICommandHandler<RegisterTutorCommand, Result> _registerTutorHandler;
     private readonly ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> _getTutorsHandler;
+    private readonly ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> _getTutorByIdHandler;
 
     public TutorsController(
         ICommandHandler<RegisterTutorCommand, Result> registerTutorHandler,
-        ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> getTutorsHandler)
+        ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> getTutorsHandler,
+        ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> getTutorByIdHandler)
     {
         _registerTutorHandler = registerTutorHandler;
         _getTutorsHandler = getTutorsHandler;
+        _getTutorByIdHandler = getTutorByIdHandler;
     }
 
     [HttpPost]
@@ -62,6 +65,27 @@ public class TutorsController : ControllerBase
 
         var query = new GetTutorsQuery(clinicId, pageNumber, pageSize);
         var result = await _getTutorsHandler.Handle(query, cancellationToken);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{tutorId}")]
+    public async Task<IActionResult> GetTutorById(Guid tutorId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetTutorByIdQuery(clinicId, tutorId);
+        var result = await _getTutorByIdHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { result.ErrorCode, result.ErrorMessage });
+        }
 
         return Ok(result.Value);
     }

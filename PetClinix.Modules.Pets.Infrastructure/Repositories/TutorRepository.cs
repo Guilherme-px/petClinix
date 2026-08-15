@@ -38,4 +38,9 @@ public class TutorRepository : ITutorRepository
 
         return (tutors, totalCount);
     }
+
+    public async Task<Tutor?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Tutors.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
 }
