@@ -8,6 +8,7 @@ public class PetsDbContext : DbContext
 {
     public PetsDbContext(DbContextOptions<PetsDbContext> options) : base(options) { }
     public DbSet<Tutor> Tutors => Set<Tutor>();
+    public DbSet<Pet> Pets => Set<Pet>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +34,21 @@ public class PetsDbContext : DbContext
             entity.Property(t => t.Notes).HasMaxLength(1000);
             entity.HasIndex(t => new { t.ClinicId, t.Cpf }).IsUnique();
             entity.Property(t => t.CreatedByUserId).IsRequired();
+        });
+
+        modelBuilder.Entity<Pet>(entity =>
+        {
+            entity.ToTable("Pets");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).HasMaxLength(100).IsRequired();
+            entity.Property(p => p.Species).IsRequired();
+            entity.Property(p => p.Breed).HasMaxLength(50);
+            entity.Property(p => p.Sex).IsRequired();
+            entity.Property(p => p.Notes).HasMaxLength(1000);
+            entity.Property(p => p.ClinicId).IsRequired();
+            entity.Property(p => p.TutorId).IsRequired();
+            entity.Property(p => p.CreatedByUserId).IsRequired();
+            entity.HasIndex(p => new { p.TutorId, p.Name }).IsUnique();
         });
     }
 }
