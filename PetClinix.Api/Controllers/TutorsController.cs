@@ -4,6 +4,7 @@ using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
 using PetClinix.Modules.Pets.Application.UseCases.GetTutors;
 using PetClinix.Modules.Pets.Application.UseCases.UpdateTutor;
+using PetClinix.Modules.Pets.Application.UseCases.DeactivateTutor;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -17,17 +18,20 @@ public class TutorsController : ControllerBase
     private readonly ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> _getTutorsHandler;
     private readonly ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> _getTutorByIdHandler;
     private readonly ICommandHandler<UpdateTutorCommand, Result> _updateTutorHandler;
+    private readonly ICommandHandler<DeactivateTutorCommand, Result> _deactivateTutorHandler;
 
     public TutorsController(
         ICommandHandler<RegisterTutorCommand, Result> registerTutorHandler,
         ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> getTutorsHandler,
         ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> getTutorByIdHandler,
-        ICommandHandler<UpdateTutorCommand, Result> updateTutorHandler)
+        ICommandHandler<UpdateTutorCommand, Result> updateTutorHandler,
+        ICommandHandler<DeactivateTutorCommand, Result> deactivateTutorHandler)
     {
         _registerTutorHandler = registerTutorHandler;
         _getTutorsHandler = getTutorsHandler;
         _getTutorByIdHandler = getTutorByIdHandler;
         _updateTutorHandler = updateTutorHandler;
+        _deactivateTutorHandler = deactivateTutorHandler;
     }
 
     [HttpPost]
@@ -111,6 +115,27 @@ public class TutorsController : ControllerBase
         );
 
         var result = await _updateTutorHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{tutorId}")]
+    public async Task<IActionResult> DeactivateTutor(Guid tutorId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var command = new DeactivateTutorCommand(clinicId, tutorId);
+        var result = await _deactivateTutorHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)
         {
