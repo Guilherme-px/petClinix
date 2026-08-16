@@ -352,6 +352,128 @@ public class TutorsControllerIntegrationTests : IClassFixture<CustomWebApplicati
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateTutor_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            Name = "Nome Novo",
+            Email = (string?)null,
+            PhoneNumber = "11912345678",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Teste",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = (string?)null,
+            City = "Sao Paulo",
+            State = "SP",
+            Notes = (string?)null
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateTutor_Should_Return_NotFound_When_Tutor_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            Name = "Nome Novo",
+            Email = (string?)null,
+            PhoneNumber = "11912345678",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Teste",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = (string?)null,
+            City = "Sao Paulo",
+            State = "SP",
+            Notes = (string?)null
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateTutor_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tutorRequest = new
+        {
+            Name = "Tutor Original",
+            Cpf = "12345678900",
+            Email = (string?)null,
+            PhoneNumber = "11988887777",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Antiga",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = (string?)null,
+            City = "Sao Paulo",
+            State = "SP",
+            Notes = (string?)null
+        };
+        await _client.PostAsJsonAsync("/api/tutors", tutorRequest);
+
+        Guid tutorId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var savedTutor = await petsDb.Tutors.FirstOrDefaultAsync(t => t.ClinicId == clinicId);
+            tutorId = savedTutor!.Id;
+        }
+
+        var updateRequest = new
+        {
+            Name = "Tutor Atualizado",
+            Email = "novo@email.com",
+            PhoneNumber = "11900000000",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Nova",
+            Number = "999",
+            Neighborhood = "Bairro Novo",
+            Complement = (string?)null,
+            City = "Santos",
+            State = "SP",
+            Notes = "Notas atualizadas"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{tutorId}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var updatedTutor = await petsDb.Tutors.FirstOrDefaultAsync(t => t.Id == tutorId);
+
+            updatedTutor.Should().NotBeNull();
+            updatedTutor!.Name.Should().Be("Tutor Atualizado");
+            updatedTutor.Street.Should().Be("Rua Nova");
+            updatedTutor.City.Should().Be("Santos");
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedTutorResponse
