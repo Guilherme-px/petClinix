@@ -72,5 +72,33 @@ public sealed class Tutor : AggregateRoot
         );
     }
 
+    public void UpdateInfo(
+    string name, string? email, string phoneNumber, string? secondaryPhoneNumber,
+    string zipCode, string street, string number, string neighborhood,
+    string? complement, string city, string state, string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new PetsDomainException("pets.tutor.name_required", "Nome é obrigatório.");
+        if (string.IsNullOrWhiteSpace(phoneNumber)) throw new PetsDomainException("pets.tutor.phone_required", "Telefone é obrigatório.");
+        if (string.IsNullOrWhiteSpace(zipCode)) throw new PetsDomainException("pets.tutor.zipcode_required", "CEP é obrigatório.");
+        if (string.IsNullOrWhiteSpace(street)) throw new PetsDomainException("pets.tutor.street_required", "Rua é obrigatória.");
+        if (string.IsNullOrWhiteSpace(number)) throw new PetsDomainException("pets.tutor.number_required", "Número é obrigatório.");
+        if (string.IsNullOrWhiteSpace(neighborhood)) throw new PetsDomainException("pets.tutor.neighborhood_required", "Bairro é obrigatório.");
+        if (string.IsNullOrWhiteSpace(city)) throw new PetsDomainException("pets.tutor.city_required", "Cidade é obrigatória.");
+        if (string.IsNullOrWhiteSpace(state)) throw new PetsDomainException("pets.tutor.state_required", "Estado é obrigatório.");
+
+        Name = name.Trim();
+        Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
+        PhoneNumber = phoneNumber.Trim();
+        SecondaryPhoneNumber = string.IsNullOrWhiteSpace(secondaryPhoneNumber) ? null : secondaryPhoneNumber.Trim();
+        ZipCode = zipCode.Trim();
+        Street = street.Trim();
+        Number = number.Trim();
+        Neighborhood = neighborhood.Trim();
+        Complement = string.IsNullOrWhiteSpace(complement) ? null : complement.Trim();
+        City = city.Trim();
+        State = state.Trim();
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+    }
+
     public void Deactivate() => IsActive = false;
 }

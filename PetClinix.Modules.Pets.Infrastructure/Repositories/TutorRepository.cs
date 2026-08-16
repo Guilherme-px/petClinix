@@ -43,4 +43,9 @@ public class TutorRepository : ITutorRepository
     {
         return await _context.Tutors.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
+
+    public async Task UpdateAsync(Tutor tutor, CancellationToken cancellationToken = default)
+    {
+        _context.Tutors.Update(tutor);
+    }
 }

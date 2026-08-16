@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterTutor;
 using PetClinix.Modules.Pets.Application.UseCases.GetTutors;
+using PetClinix.Modules.Pets.Application.UseCases.UpdateTutor;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -15,15 +16,18 @@ public class TutorsController : ControllerBase
     private readonly ICommandHandler<RegisterTutorCommand, Result> _registerTutorHandler;
     private readonly ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> _getTutorsHandler;
     private readonly ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> _getTutorByIdHandler;
+    private readonly ICommandHandler<UpdateTutorCommand, Result> _updateTutorHandler;
 
     public TutorsController(
         ICommandHandler<RegisterTutorCommand, Result> registerTutorHandler,
         ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>> getTutorsHandler,
-        ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> getTutorByIdHandler)
+        ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>> getTutorByIdHandler,
+        ICommandHandler<UpdateTutorCommand, Result> updateTutorHandler)
     {
         _registerTutorHandler = registerTutorHandler;
         _getTutorsHandler = getTutorsHandler;
         _getTutorByIdHandler = getTutorByIdHandler;
+        _updateTutorHandler = updateTutorHandler;
     }
 
     [HttpPost]
@@ -89,9 +93,40 @@ public class TutorsController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [HttpPut("{tutorId}")]
+    public async Task<IActionResult> UpdateTutor(Guid tutorId, [FromBody] UpdateTutorRequest request, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var command = new UpdateTutorCommand(
+            clinicId, tutorId, request.Name, request.Email, request.PhoneNumber, request.SecondaryPhoneNumber,
+            request.ZipCode, request.Street, request.Number, request.Neighborhood, request.Complement,
+            request.City, request.State, request.Notes
+        );
+
+        var result = await _updateTutorHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record RegisterTutorRequest(
     string Name, string Cpf, string? Email, string PhoneNumber, string? SecondaryPhoneNumber,
+    string ZipCode, string Street, string Number, string Neighborhood, string? Complement, string City, string State, string? Notes
+);
+
+public record UpdateTutorRequest(
+    string Name, string? Email, string PhoneNumber, string? SecondaryPhoneNumber,
     string ZipCode, string Street, string Number, string Neighborhood, string? Complement, string City, string State, string? Notes
 );
