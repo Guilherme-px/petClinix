@@ -271,7 +271,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Portal de Cobrança do Stripe e Tratamento de Cancelamento de Assinatura
 - [x] Integração de E-mail (Resend) para Boas-vindas e Redefinição de Senha
 - [x] Módulo de gerenciamento de funcionários
-- [ ] Módulo de cadastro de Pets e Tutores
+- [x] Módulo de cadastro de Pets e Tutores
 - [ ] Agendamento e fluxos de trabalho clínicos
 
 ---

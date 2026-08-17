@@ -270,7 +270,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Stripe Billing Portal & Subscription Cancellation Handling
 - [x] Email Integration (Resend) for Welcome & Password Reset
 - [x] Employee management module
-- [ ] Pet & Tutor registration module
+- [x] Pet & Tutor registration module
 - [ ] Scheduling and clinical workflows
 
 ---
