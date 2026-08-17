@@ -4,6 +4,7 @@ using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterPet;
 using PetClinix.Modules.Pets.Application.UseCases.GetPets;
 using PetClinix.Modules.Pets.Application.UseCases.UpdatePet;
+using PetClinix.Modules.Pets.Application.UseCases.DeactivatePet;
 using PetClinix.Modules.Pets.Domain.Enums;
 using System.Security.Claims;
 
@@ -18,17 +19,20 @@ public class PetsController : ControllerBase
     private readonly ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> _getPetsHandler;
     private readonly ICommandHandler<GetPetByIdQuery, Result<PetResponse>> _getPetByIdHandler;
     private readonly ICommandHandler<UpdatePetCommand, Result> _updatePetHandler;
+    private readonly ICommandHandler<DeactivatePetCommand, Result> _deactivatePetHandler;
 
     public PetsController(
         ICommandHandler<RegisterPetCommand, Result> registerPetHandler,
         ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> getPetsHandler,
         ICommandHandler<GetPetByIdQuery, Result<PetResponse>> getPetByIdHandler,
-        ICommandHandler<UpdatePetCommand, Result> updatePetHandler)
+        ICommandHandler<UpdatePetCommand, Result> updatePetHandler,
+        ICommandHandler<DeactivatePetCommand, Result> deactivatePetHandler)
     {
         _registerPetHandler = registerPetHandler;
         _getPetsHandler = getPetsHandler;
         _getPetByIdHandler = getPetByIdHandler;
         _updatePetHandler = updatePetHandler;
+        _deactivatePetHandler = deactivatePetHandler;
     }
 
     [HttpPost]
@@ -118,6 +122,26 @@ public class PetsController : ControllerBase
             request.Sex, request.Weight, request.IsNeutered, request.Notes);
 
         var result = await _updatePetHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{petId}")]
+    public async Task<IActionResult> DeactivatePet(Guid tutorId, Guid petId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var command = new DeactivatePetCommand(clinicId, tutorId, petId);
+        var result = await _deactivatePetHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)
         {
