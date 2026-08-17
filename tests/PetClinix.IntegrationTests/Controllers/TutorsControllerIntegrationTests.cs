@@ -57,7 +57,6 @@ public class TutorsControllerIntegrationTests : IClassFixture<CustomWebApplicati
             var subscription = PetClinix.Modules.Billing.Domain.Entities.Subscription.Create(
                 clinicId, $"cus_test_{Guid.NewGuid()}", $"sub_test_{Guid.NewGuid()}", PetClinix.Modules.Billing.Domain.Enums.PlanTier.Basic);
             await billingDb.Subscriptions.AddAsync(subscription);
-            await billingDb.Subscriptions.AddAsync(subscription);
             await billingDb.SaveChangesAsync();
         }
 
