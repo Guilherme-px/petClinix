@@ -451,6 +451,164 @@ public class PetsControllerIntegrationTests : IClassFixture<CustomWebApplication
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdatePet_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            Name = "Rex Atualizado",
+            Species = 1,
+            Breed = "Labrador",
+            BirthDate = new DateOnly(2020, 5, 10),
+            Sex = 1,
+            Weight = 16.0,
+            IsNeutered = true,
+            Notes = "Atualizado"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{Guid.NewGuid()}/pets/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdatePet_Should_Return_NotFound_When_Pet_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tutorRequest = new
+        {
+            Name = "Tutor Update Pet 404",
+            Cpf = "12345678900",
+            Email = (string?)null,
+            PhoneNumber = "11988887777",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Teste",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = (string?)null,
+            City = "Sao Paulo",
+            State = "SP",
+            Notes = (string?)null
+        };
+        await _client.PostAsJsonAsync("/api/tutors", tutorRequest);
+
+        Guid tutorId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var savedTutor = await petsDb.Tutors.FirstOrDefaultAsync(t => t.ClinicId == clinicId);
+            tutorId = savedTutor!.Id;
+        }
+
+        var updateRequest = new
+        {
+            Name = "Rex Atualizado",
+            Species = 1,
+            Breed = "Labrador",
+            BirthDate = new DateOnly(2020, 5, 10),
+            Sex = 1,
+            Weight = 16.0,
+            IsNeutered = true,
+            Notes = "Atualizado"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{tutorId}/pets/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdatePet_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tutorRequest = new
+        {
+            Name = "Tutor Update Pet Sucesso",
+            Cpf = "12345678900",
+            Email = (string?)null,
+            PhoneNumber = "11988887777",
+            SecondaryPhoneNumber = (string?)null,
+            ZipCode = "01001000",
+            Street = "Rua Teste",
+            Number = "123",
+            Neighborhood = "Centro",
+            Complement = (string?)null,
+            City = "Sao Paulo",
+            State = "SP",
+            Notes = (string?)null
+        };
+        await _client.PostAsJsonAsync("/api/tutors", tutorRequest);
+
+        Guid tutorId;
+        Guid petId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var savedTutor = await petsDb.Tutors.FirstOrDefaultAsync(t => t.ClinicId == clinicId);
+            tutorId = savedTutor!.Id;
+        }
+
+        var petRequest = new
+        {
+            Name = "Rex Original",
+            Species = 1,
+            Breed = "Vira Lata",
+            BirthDate = new DateOnly(2020, 5, 10),
+            Sex = 1,
+            Weight = 10.0,
+            IsNeutered = true,
+            Notes = "Original"
+        };
+        await _client.PostAsJsonAsync($"/api/tutors/{tutorId}/pets", petRequest);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var savedPet = await petsDb.Pets.FirstOrDefaultAsync(p => p.TutorId == tutorId);
+            petId = savedPet!.Id;
+        }
+
+        var updateRequest = new
+        {
+            Name = "Rex Atualizado",
+            Species = 1,
+            Breed = "Labrador",
+            BirthDate = new DateOnly(2020, 5, 10),
+            Sex = 1,
+            Weight = 16.5,
+            IsNeutered = true,
+            Notes = "Peso e raça atualizados"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/tutors/{tutorId}/pets/{petId}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var updatedPet = await petsDb.Pets.FirstOrDefaultAsync(p => p.Id == petId);
+
+            updatedPet.Should().NotBeNull();
+            updatedPet!.Name.Should().Be("Rex Atualizado");
+            updatedPet.Breed.Should().Be("Labrador");
+            updatedPet.Weight.Should().Be(16.5);
+            updatedPet.UpdatedByUserId.Should().Be(userId);
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedPetResponse
