@@ -29,6 +29,22 @@ public class PetRepository : IPetRepository
         return await _context.Pets.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<(IEnumerable<Pet> Pets, int TotalCount)> GetAllByTutorIdAsync(Guid clinicId, Guid tutorId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Pets
+            .Where(p => p.ClinicId == clinicId && p.TutorId == tutorId && p.IsActive)
+            .OrderBy(p => p.Name);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var pets = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (pets, totalCount);
+    }
+
     public async Task UpdateAsync(Pet pet, CancellationToken cancellationToken = default)
     {
         _context.Pets.Update(pet);
