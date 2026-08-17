@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.UseCases.RegisterPet;
 using PetClinix.Modules.Pets.Application.UseCases.GetPets;
+using PetClinix.Modules.Pets.Application.UseCases.UpdatePet;
 using PetClinix.Modules.Pets.Domain.Enums;
 using System.Security.Claims;
 
@@ -16,15 +17,18 @@ public class PetsController : ControllerBase
     private readonly ICommandHandler<RegisterPetCommand, Result> _registerPetHandler;
     private readonly ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> _getPetsHandler;
     private readonly ICommandHandler<GetPetByIdQuery, Result<PetResponse>> _getPetByIdHandler;
+    private readonly ICommandHandler<UpdatePetCommand, Result> _updatePetHandler;
 
     public PetsController(
         ICommandHandler<RegisterPetCommand, Result> registerPetHandler,
         ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> getPetsHandler,
-        ICommandHandler<GetPetByIdQuery, Result<PetResponse>> getPetByIdHandler)
+        ICommandHandler<GetPetByIdQuery, Result<PetResponse>> getPetByIdHandler,
+        ICommandHandler<UpdatePetCommand, Result> updatePetHandler)
     {
         _registerPetHandler = registerPetHandler;
         _getPetsHandler = getPetsHandler;
         _getPetByIdHandler = getPetByIdHandler;
+        _updatePetHandler = updatePetHandler;
     }
 
     [HttpPost]
@@ -96,9 +100,46 @@ public class PetsController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [HttpPut("{petId}")]
+    public async Task<IActionResult> UpdatePet(Guid tutorId, Guid petId, [FromBody] UpdatePetRequest request, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Token inválido." });
+        }
+
+        var command = new UpdatePetCommand(
+            clinicId, tutorId, petId, userId,
+            request.Name, request.Species, request.Breed, request.BirthDate,
+            request.Sex, request.Weight, request.IsNeutered, request.Notes);
+
+        var result = await _updatePetHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record RegisterPetRequest(
+    string Name,
+    Species Species,
+    string? Breed,
+    DateOnly? BirthDate,
+    PetSex Sex,
+    double? Weight,
+    bool IsNeutered,
+    string? Notes
+);
+
+public record UpdatePetRequest(
     string Name,
     Species Species,
     string? Breed,
