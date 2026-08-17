@@ -113,6 +113,7 @@ builder.Services.AddScoped<ICommandHandler<DeactivateTutorCommand, Result>, Deac
 builder.Services.AddScoped<IPetRepository, PetRepository>();
 builder.Services.AddScoped<ICommandHandler<RegisterPetCommand, Result>, RegisterPetCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>>, GetPetsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<GetPetByIdQuery, Result<PetResponse>>, GetPetByIdQueryHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {

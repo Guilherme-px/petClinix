@@ -15,13 +15,16 @@ public class PetsController : ControllerBase
 {
     private readonly ICommandHandler<RegisterPetCommand, Result> _registerPetHandler;
     private readonly ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> _getPetsHandler;
+    private readonly ICommandHandler<GetPetByIdQuery, Result<PetResponse>> _getPetByIdHandler;
 
     public PetsController(
         ICommandHandler<RegisterPetCommand, Result> registerPetHandler,
-        ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> getPetsHandler)
+        ICommandHandler<GetPetsQuery, Result<PagedResult<PetResponse>>> getPetsHandler,
+        ICommandHandler<GetPetByIdQuery, Result<PetResponse>> getPetByIdHandler)
     {
         _registerPetHandler = registerPetHandler;
         _getPetsHandler = getPetsHandler;
+        _getPetByIdHandler = getPetByIdHandler;
     }
 
     [HttpPost]
@@ -70,6 +73,26 @@ public class PetsController : ControllerBase
 
         var query = new GetPetsQuery(clinicId, tutorId, pageNumber, pageSize);
         var result = await _getPetsHandler.Handle(query, cancellationToken);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{petId}")]
+    public async Task<IActionResult> GetPetById(Guid tutorId, Guid petId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetPetByIdQuery(clinicId, tutorId, petId);
+        var result = await _getPetByIdHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { result.ErrorCode, result.ErrorMessage });
+        }
 
         return Ok(result.Value);
     }
