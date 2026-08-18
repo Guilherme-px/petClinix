@@ -24,6 +24,22 @@ public class ServiceRepository : IServiceRepository
         return await _context.Services.AnyAsync(s => s.ClinicId == clinicId && s.Name == name, cancellationToken);
     }
 
+    public async Task<(IEnumerable<Service> Services, int TotalCount)> GetAllByClinicIdAsync(Guid clinicId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Services
+            .Where(s => s.ClinicId == clinicId && s.IsActive)
+            .OrderBy(s => s.Name);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var services = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (services, totalCount);
+    }
+
     public async Task<Service?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Services.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);

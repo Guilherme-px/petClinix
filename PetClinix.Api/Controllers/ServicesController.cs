@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
+using PetClinix.Modules.Catalog.Application.UseCases.GetServices;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -12,10 +13,14 @@ namespace PetClinix.Api.Controllers;
 public class ServicesController : ControllerBase
 {
     private readonly ICommandHandler<RegisterServiceCommand, Result> _registerServiceHandler;
+    private readonly ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> _getServicesHandler;
 
-    public ServicesController(ICommandHandler<RegisterServiceCommand, Result> registerServiceHandler)
+    public ServicesController(
+        ICommandHandler<RegisterServiceCommand, Result> registerServiceHandler,
+        ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> getServicesHandler)
     {
         _registerServiceHandler = registerServiceHandler;
+        _getServicesHandler = getServicesHandler;
     }
 
     [HttpPost]
@@ -47,6 +52,21 @@ public class ServicesController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetServices([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetServicesQuery(clinicId, pageNumber, pageSize);
+        var result = await _getServicesHandler.Handle(query, cancellationToken);
+
+        return Ok(result.Value);
     }
 }
 

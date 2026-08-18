@@ -45,6 +45,7 @@ using PetClinix.Modules.Pets.Application.UseCases.DeactivatePet;
 using PetClinix.Modules.Pets.Domain.Repositories;
 using PetClinix.Modules.Catalog.Application.Contracts;
 using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
+using PetClinix.Modules.Catalog.Application.UseCases.GetServices;
 using PetClinix.Modules.Catalog.Domain.Repositories;
 using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Catalog.Infrastructure.Repositories;
@@ -129,6 +130,7 @@ builder.Services.AddScoped<ICommandHandler<DeactivatePetCommand, Result>, Deacti
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICatalogUnitOfWork, PetClinix.Modules.Catalog.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<RegisterServiceCommand, Result>, RegisterServiceCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>>, GetServicesQueryHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
