@@ -294,6 +294,73 @@ public class ServicesControllerIntegrationTests : IClassFixture<CustomWebApplica
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task DeactivateService_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.DeleteAsync($"/api/services/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task DeactivateService_Should_Return_400_When_Service_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var response = await _client.DeleteAsync($"/api/services/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        errorContent!.ErrorCode.Should().Be("catalog.service.not_found");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task DeactivateService_Should_Return_204_And_Set_Inactive_In_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var serviceRequest = new
+        {
+            Name = "Servico Delete",
+            Description = "Desc Delete",
+            DurationInMinutes = 15,
+            Price = 50.0m,
+            RequiresVeterinarian = true
+        };
+        await _client.PostAsJsonAsync("/api/services", serviceRequest);
+
+        Guid serviceId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var savedService = await catalogDb.Services.FirstOrDefaultAsync(s => s.ClinicId == clinicId);
+            serviceId = savedService!.Id;
+        }
+
+        var response = await _client.DeleteAsync($"/api/services/{serviceId}");
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var deactivatedService = await catalogDb.Services.FirstOrDefaultAsync(s => s.Id == serviceId);
+
+            deactivatedService.Should().NotBeNull();
+            deactivatedService!.IsActive.Should().BeFalse();
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedServiceResponse
