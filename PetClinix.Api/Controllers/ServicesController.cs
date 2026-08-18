@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
 using PetClinix.Modules.Catalog.Application.UseCases.GetServices;
+using PetClinix.Modules.Catalog.Application.UseCases.UpdateService;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -14,13 +15,16 @@ public class ServicesController : ControllerBase
 {
     private readonly ICommandHandler<RegisterServiceCommand, Result> _registerServiceHandler;
     private readonly ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> _getServicesHandler;
+    private readonly ICommandHandler<UpdateServiceCommand, Result> _updateServiceHandler;
 
     public ServicesController(
         ICommandHandler<RegisterServiceCommand, Result> registerServiceHandler,
-        ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> getServicesHandler)
+        ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> getServicesHandler,
+        ICommandHandler<UpdateServiceCommand, Result> updateServiceHandler)
     {
         _registerServiceHandler = registerServiceHandler;
         _getServicesHandler = getServicesHandler;
+        _updateServiceHandler = updateServiceHandler;
     }
 
     [HttpPost]
@@ -68,9 +72,42 @@ public class ServicesController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [HttpPut("{serviceId}")]
+    public async Task<IActionResult> UpdateService(Guid serviceId, [FromBody] UpdateServiceRequest request, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Token inválido." });
+        }
+
+        var command = new UpdateServiceCommand(
+            clinicId, serviceId, userId,
+            request.Name, request.Description, request.DurationInMinutes, request.Price, request.RequiresVeterinarian);
+
+        var result = await _updateServiceHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record RegisterServiceRequest(
+    string Name,
+    string? Description,
+    int DurationInMinutes,
+    decimal Price,
+    bool RequiresVeterinarian
+);
+
+public record UpdateServiceRequest(
     string Name,
     string? Description,
     int DurationInMinutes,
