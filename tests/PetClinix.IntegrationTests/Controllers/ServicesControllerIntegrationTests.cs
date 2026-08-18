@@ -134,7 +134,7 @@ public class ServicesControllerIntegrationTests : IClassFixture<CustomWebApplica
         var (email, password, userId, clinicId) = await SetupAdminAsync();
         var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-        
+
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
 
         var serviceRequest = new
@@ -157,4 +157,61 @@ public class ServicesControllerIntegrationTests : IClassFixture<CustomWebApplica
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task GetServices_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.GetAsync("/api/services");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetServices_Should_Return_200_And_Service_List_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var serviceRequest = new
+        {
+            Name = "Vacina V3 Listar",
+            Description = "Vacina para teste de lista",
+            DurationInMinutes = 15,
+            Price = 80.0m,
+            RequiresVeterinarian = true
+        };
+        await _client.PostAsJsonAsync("/api/services", serviceRequest);
+
+        var response = await _client.GetAsync("/api/services");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedServiceResponse>();
+        result.Should().NotBeNull();
+        result!.Items.Should().NotBeEmpty();
+        result.TotalCount.Should().BeGreaterThanOrEqualTo(1);
+        result.Items.Should().ContainSingle(s => s.Name == "Vacina V3 Listar");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+}
+
+public class PagedServiceResponse
+{
+    public List<ServiceItemResponse> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+}
+
+public class ServiceItemResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public int DurationInMinutes { get; set; }
+    public decimal Price { get; set; }
+    public bool RequiresVeterinarian { get; set; }
 }
