@@ -196,6 +196,104 @@ public class ServicesControllerIntegrationTests : IClassFixture<CustomWebApplica
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateService_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            Name = "Consulta Atualizada",
+            Description = "Desc Atualizada",
+            DurationInMinutes = 45,
+            Price = 200.0m,
+            RequiresVeterinarian = false
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/services/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateService_Should_Return_400_When_Service_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            Name = "Consulta Atualizada",
+            Description = "Desc Atualizada",
+            DurationInMinutes = 45,
+            Price = 200.0m,
+            RequiresVeterinarian = false
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/services/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        errorContent!.ErrorCode.Should().Be("catalog.service.not_found");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateService_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var serviceRequest = new
+        {
+            Name = "Vacina Original",
+            Description = "Desc Original",
+            DurationInMinutes = 15,
+            Price = 80.0m,
+            RequiresVeterinarian = true
+        };
+        await _client.PostAsJsonAsync("/api/services", serviceRequest);
+
+        Guid serviceId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var savedService = await catalogDb.Services.FirstOrDefaultAsync(s => s.ClinicId == clinicId);
+            serviceId = savedService!.Id;
+        }
+
+        var updateRequest = new
+        {
+            Name = "Vacina Atualizada",
+            Description = "Nova descrição",
+            DurationInMinutes = 30,
+            Price = 120.0m,
+            RequiresVeterinarian = false
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/services/{serviceId}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var updatedService = await catalogDb.Services.FirstOrDefaultAsync(s => s.Id == serviceId);
+
+            updatedService.Should().NotBeNull();
+            updatedService!.Name.Should().Be("Vacina Atualizada");
+            updatedService.DurationInMinutes.Should().Be(30);
+            updatedService.Price.Should().Be(120.0m);
+            updatedService.RequiresVeterinarian.Should().BeFalse();
+            updatedService.UpdatedByUserId.Should().Be(userId);
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedServiceResponse
