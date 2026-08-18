@@ -43,6 +43,11 @@ using PetClinix.Modules.Pets.Application.UseCases.GetPets;
 using PetClinix.Modules.Pets.Application.UseCases.UpdatePet;
 using PetClinix.Modules.Pets.Application.UseCases.DeactivatePet;
 using PetClinix.Modules.Pets.Domain.Repositories;
+using PetClinix.Modules.Catalog.Application.Contracts;
+using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
+using PetClinix.Modules.Catalog.Domain.Repositories;
+using PetClinix.Modules.Catalog.Infrastructure.Persistence;
+using PetClinix.Modules.Catalog.Infrastructure.Repositories;
 using System.Text;
 using System.Threading.RateLimiting;
 using Resend;
@@ -78,6 +83,9 @@ builder.Services.AddDbContext<BillingDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDbContext<PetsDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddDbContext<CatalogDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
@@ -118,6 +126,9 @@ builder.Services.AddScoped<ICommandHandler<GetPetsQuery, Result<PagedResult<PetR
 builder.Services.AddScoped<ICommandHandler<GetPetByIdQuery, Result<PetResponse>>, GetPetByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdatePetCommand, Result>, UpdatePetCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeactivatePetCommand, Result>, DeactivatePetCommandHandler>();
+builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
+builder.Services.AddScoped<ICatalogUnitOfWork, PetClinix.Modules.Catalog.Infrastructure.Persistence.UnitOfWork>();
+builder.Services.AddScoped<ICommandHandler<RegisterServiceCommand, Result>, RegisterServiceCommandHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {

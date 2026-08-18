@@ -1,0 +1,36 @@
+using Microsoft.EntityFrameworkCore;
+using PetClinix.Modules.Catalog.Domain.Entities;
+using PetClinix.Modules.Catalog.Domain.Repositories;
+using PetClinix.Modules.Catalog.Infrastructure.Persistence;
+
+namespace PetClinix.Modules.Catalog.Infrastructure.Repositories;
+
+public class ServiceRepository : IServiceRepository
+{
+    private readonly CatalogDbContext _context;
+
+    public ServiceRepository(CatalogDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AddAsync(Service service, CancellationToken cancellationToken = default)
+    {
+        await _context.Services.AddAsync(service, cancellationToken);
+    }
+
+    public async Task<bool> ExistsByNameAsync(Guid clinicId, string name, CancellationToken cancellationToken = default)
+    {
+        return await _context.Services.AnyAsync(s => s.ClinicId == clinicId && s.Name == name, cancellationToken);
+    }
+
+    public async Task<Service?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Services.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task UpdateAsync(Service service, CancellationToken cancellationToken = default)
+    {
+        _context.Services.Update(service);
+    }
+}
