@@ -4,6 +4,7 @@ using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
 using PetClinix.Modules.Catalog.Application.UseCases.GetServices;
 using PetClinix.Modules.Catalog.Application.UseCases.UpdateService;
+using PetClinix.Modules.Catalog.Application.UseCases.DeactivateService;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -16,15 +17,18 @@ public class ServicesController : ControllerBase
     private readonly ICommandHandler<RegisterServiceCommand, Result> _registerServiceHandler;
     private readonly ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> _getServicesHandler;
     private readonly ICommandHandler<UpdateServiceCommand, Result> _updateServiceHandler;
+    private readonly ICommandHandler<DeactivateServiceCommand, Result> _deactivateServiceHandler;
 
     public ServicesController(
         ICommandHandler<RegisterServiceCommand, Result> registerServiceHandler,
         ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>> getServicesHandler,
-        ICommandHandler<UpdateServiceCommand, Result> updateServiceHandler)
+        ICommandHandler<UpdateServiceCommand, Result> updateServiceHandler,
+        ICommandHandler<DeactivateServiceCommand, Result> deactivateServiceHandler)
     {
         _registerServiceHandler = registerServiceHandler;
         _getServicesHandler = getServicesHandler;
         _updateServiceHandler = updateServiceHandler;
+        _deactivateServiceHandler = deactivateServiceHandler;
     }
 
     [HttpPost]
@@ -89,6 +93,27 @@ public class ServicesController : ControllerBase
             request.Name, request.Description, request.DurationInMinutes, request.Price, request.RequiresVeterinarian);
 
         var result = await _updateServiceHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{serviceId}")]
+    public async Task<IActionResult> DeactivateService(Guid serviceId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var command = new DeactivateServiceCommand(clinicId, serviceId);
+        var result = await _deactivateServiceHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)
         {
