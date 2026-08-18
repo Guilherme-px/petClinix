@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
+using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Pets.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
@@ -54,20 +55,31 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             });
 
-            var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
-            var identityDb = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-            var billingDb = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
-            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>(); 
+            var catalogDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<CatalogDbContext>));
+            if (catalogDescriptor != null) services.Remove(catalogDescriptor);
 
-            identityDb.Database.Migrate();
-            billingDb.Database.Migrate();
-            petsDb.Database.Migrate(); 
+            services.AddDbContext<CatalogDbContext>(options =>
+            {
+                options.UseNpgsql(_dbContainer.GetConnectionString());
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            });
 
             var emailServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
             if (emailServiceDescriptor != null) services.Remove(emailServiceDescriptor);
-
             services.AddScoped<IEmailService, TestEmailService>();
+
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+
+            var identityDb = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var billingDb = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
+            var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+
+            identityDb.Database.Migrate();
+            billingDb.Database.Migrate();
+            petsDb.Database.Migrate();
+            catalogDb.Database.Migrate();
         });
     }
 
