@@ -271,6 +271,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Email Integration (Resend) for Welcome & Password Reset
 - [x] Employee management module
 - [x] Pet & Tutor registration module
+- [x] Services & Catalog module (CRUD, Multi-tenant isolation, Audit tracking)
 - [ ] Scheduling and clinical workflows
 
 ---

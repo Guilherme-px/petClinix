@@ -272,6 +272,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Integração de E-mail (Resend) para Boas-vindas e Redefinição de Senha
 - [x] Módulo de gerenciamento de funcionários
 - [x] Módulo de cadastro de Pets e Tutores
+- [x] Módulo de Serviços e Catálogo (CRUD, Isolamento Multi-tenant, Auditoria)
 - [ ] Agendamento e fluxos de trabalho clínicos
 
 ---
