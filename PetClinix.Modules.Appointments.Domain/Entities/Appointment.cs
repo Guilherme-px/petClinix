@@ -109,4 +109,25 @@ public sealed class Appointment : AggregateRoot
         UpdatedByUserId = updatedByUserId;
         UpdatedAtUtc = DateTime.UtcNow;
     }
+
+    public void UpdateDetails(
+    Guid updatedByUserId, Guid veterinarianId, Guid serviceId, DateTime newScheduledDateUtc, string? notes)
+    {
+        if (Status == AppointmentStatus.Completed || Status == AppointmentStatus.Canceled)
+            throw new AppointmentsDomainException("appointments.appt.invalid_status", "Agendamentos concluídos ou cancelados não podem ser editados.");
+
+        if (newScheduledDateUtc <= DateTime.UtcNow)
+            throw new AppointmentsDomainException("appointments.appt.past_date", "Não é possível remarcar para uma data no passado.");
+
+        VeterinarianId = veterinarianId;
+        ServiceId = serviceId;
+        ScheduledDateUtc = newScheduledDateUtc;
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+
+        if (Status == AppointmentStatus.Confirmed)
+            Status = AppointmentStatus.Scheduled;
+
+        UpdatedByUserId = updatedByUserId;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
 }
