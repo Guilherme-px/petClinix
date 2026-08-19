@@ -54,6 +54,7 @@ using PetClinix.Modules.Catalog.Infrastructure.Repositories;
 using PetClinix.Modules.Appointments.Application.Contracts;
 using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
 using PetClinix.Modules.Appointments.Application.UseCases.GetAvailableSlots;
+using PetClinix.Modules.Appointments.Application.UseCases.GetAppointments;
 using PetClinix.Modules.Appointments.Domain.Repositories;
 using PetClinix.Modules.Appointments.Infrastructure.Persistence;
 using PetClinix.Modules.Appointments.Infrastructure.Repositories;
@@ -148,6 +149,7 @@ builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentsUnitOfWork, PetClinix.Modules.Appointments.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<RegisterAppointmentCommand, Result>, RegisterAppointmentCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>>, GetAvailableSlotsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>>, GetAppointmentsQueryHandler>();
 
 builder.Services.AddSingleton<IClinicScheduleService>(new MockClinicScheduleService());
 

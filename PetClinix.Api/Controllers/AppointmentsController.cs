@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
 using PetClinix.Modules.Appointments.Application.UseCases.GetAvailableSlots;
+using PetClinix.Modules.Appointments.Application.UseCases.GetAppointments;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -14,13 +15,16 @@ public class AppointmentsController : ControllerBase
 {
     private readonly ICommandHandler<RegisterAppointmentCommand, Result> _registerAppointmentHandler;
     private readonly ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> _getSlotsHandler;
+    private readonly ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> _getAppointmentsHandler;
 
     public AppointmentsController(
         ICommandHandler<RegisterAppointmentCommand, Result> registerAppointmentHandler,
-        ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> getSlotsHandler)
+        ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> getSlotsHandler,
+        ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> getAppointmentsHandler)
     {
         _registerAppointmentHandler = registerAppointmentHandler;
         _getSlotsHandler = getSlotsHandler;
+        _getAppointmentsHandler = getAppointmentsHandler;
     }
 
     [HttpPost]
@@ -65,6 +69,22 @@ public class AppointmentsController : ControllerBase
         {
             return BadRequest(new { result.ErrorCode, result.ErrorMessage });
         }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAppointments([FromQuery] DateTime date, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50, CancellationToken cancellationToken = default)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+        }
+
+        var query = new GetAppointmentsQuery(clinicId, date, pageNumber, pageSize);
+        var result = await _getAppointmentsHandler.Handle(query, cancellationToken);
 
         return Ok(result.Value);
     }
