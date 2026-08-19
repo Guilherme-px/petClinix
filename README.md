@@ -272,7 +272,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Employee management module
 - [x] Pet & Tutor registration module
 - [x] Services & Catalog module (CRUD, Multi-tenant isolation, Audit tracking)
-- [ ] Scheduling and clinical workflows
+- [x] Scheduling module (Appointments, Double Booking prevention, Available Slots algorithm, Lifecycle status management)
 
 ---
 

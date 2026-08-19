@@ -273,7 +273,7 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] Módulo de gerenciamento de funcionários
 - [x] Módulo de cadastro de Pets e Tutores
 - [x] Módulo de Serviços e Catálogo (CRUD, Isolamento Multi-tenant, Auditoria)
-- [ ] Agendamento e fluxos de trabalho clínicos
+- [x] Módulo de Agendamento (Appointments, Prevenção de Conflito de Horário, Algoritmo de Horários Disponíveis, Gestão de Status e Ciclo de Vida)
 
 ---
 
