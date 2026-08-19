@@ -27,6 +27,8 @@
     <ProjectReference Include="..\PetClinix.Modules.Pets.Application\PetClinix.Modules.Pets.Application.csproj" />
     <ProjectReference Include="..\PetClinix.Modules.Catalog.Application\PetClinix.Modules.Catalog.Application.csproj" />
     <ProjectReference Include="..\PetClinix.Modules.Catalog.Infrastructure\PetClinix.Modules.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\PetClinix.Modules.Appointments.Application\PetClinix.Modules.Appointments.Application.csproj" />
+    <ProjectReference Include="..\PetClinix.Modules.Appointments.Infrastructure\PetClinix.Modules.Appointments.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
