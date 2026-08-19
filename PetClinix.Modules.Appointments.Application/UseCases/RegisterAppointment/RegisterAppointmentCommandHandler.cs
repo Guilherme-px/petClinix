@@ -19,9 +19,18 @@ public sealed class RegisterAppointmentCommandHandler : ICommandHandler<Register
 
     public async Task<Result> Handle(RegisterAppointmentCommand command, CancellationToken cancellationToken)
     {
-        var existingAppointments = await _appointmentRepository.GetByVeterinarianAndDateAsync(command.VeterinarianId, command.ScheduledDateUtc, cancellationToken);
+        var normalizedDate = command.ScheduledDateUtc.AddTicks(-(command.ScheduledDateUtc.Ticks % TimeSpan.TicksPerMinute));
+        var existingAppointments = await _appointmentRepository.GetByVeterinarianAndDateAsync(command.VeterinarianId, normalizedDate, cancellationToken);
 
-        if (existingAppointments.Any(a => a.ScheduledDateUtc == command.ScheduledDateUtc))
+        var hasConflict = existingAppointments.Any(a =>
+            a.ScheduledDateUtc.Year == normalizedDate.Year &&
+            a.ScheduledDateUtc.Month == normalizedDate.Month &&
+            a.ScheduledDateUtc.Day == normalizedDate.Day &&
+            a.ScheduledDateUtc.Hour == normalizedDate.Hour &&
+            a.ScheduledDateUtc.Minute == normalizedDate.Minute
+        );
+
+        if (hasConflict)
         {
             return Result.Failure("appointments.appt.slot_taken", "O veterinário já possui um agendamento neste exato horário.");
         }
@@ -30,7 +39,7 @@ public sealed class RegisterAppointmentCommandHandler : ICommandHandler<Register
         {
             var appointment = Appointment.Create(
                 command.ClinicId, command.TutorId, command.PetId, command.ServiceId, command.VeterinarianId,
-                command.ScheduledDateUtc, command.Notes, command.CreatedByUserId
+                normalizedDate, command.Notes, command.CreatedByUserId
             );
 
             await _appointmentRepository.AddAsync(appointment, cancellationToken);
