@@ -189,7 +189,7 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
         var (email, password, userId, clinicId) = await SetupAdminAsync();
         var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-        
+
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
 
         var serviceRequest = new
@@ -240,4 +240,90 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task GetAppointments_Should_Return_401_When_No_Token_Provided()
+    {
+        var date = DateTime.UtcNow.AddDays(1);
+        var response = await _client.GetAsync($"/api/appointments?date={date:yyyy-MM-ddTHH:mm:ssZ}");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetAppointments_Should_Return_200_And_List_When_Appointments_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tomorrow = DateTime.UtcNow.AddDays(1);
+        var apptDate = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 10, 0, 0, DateTimeKind.Utc);
+
+        var apptRequest = new
+        {
+            TutorId = Guid.NewGuid(),
+            PetId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid(),
+            VeterinarianId = Guid.NewGuid(),
+            ScheduledDateUtc = apptDate,
+            Notes = "Agendamento de teste para listagem"
+        };
+        await _client.PostAsJsonAsync("/api/appointments", apptRequest);
+
+        var response = await _client.GetAsync($"/api/appointments?date={tomorrow:yyyy-MM-ddTHH:mm:ssZ}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedAppointmentResponse>();
+        result.Should().NotBeNull();
+        result!.Items.Should().NotBeEmpty();
+        result.TotalCount.Should().BeGreaterThanOrEqualTo(1);
+        result.Items.Should().ContainSingle(a => a.ScheduledDateUtc == apptDate);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task GetAppointments_Should_Return_200_And_Empty_List_When_No_Appointments()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var emptyDate = DateTime.UtcNow.AddDays(10);
+        var response = await _client.GetAsync($"/api/appointments?date={emptyDate:yyyy-MM-ddTHH:mm:ssZ}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedAppointmentResponse>();
+        result.Should().NotBeNull();
+        result!.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+}
+
+public class PagedAppointmentResponse
+{
+    public List<AppointmentItemResponse> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+}
+
+public class AppointmentItemResponse
+{
+    public Guid Id { get; set; }
+    public Guid TutorId { get; set; }
+    public Guid PetId { get; set; }
+    public Guid ServiceId { get; set; }
+    public Guid VeterinarianId { get; set; }
+    public DateTime ScheduledDateUtc { get; set; }
+    public string? Notes { get; set; }
+    public int Status { get; set; }
 }
