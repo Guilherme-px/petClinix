@@ -7,6 +7,7 @@ using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using PetClinix.Modules.Pets.Infrastructure.Persistence;
+using PetClinix.Modules.Appointments.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
 namespace PetClinix.IntegrationTests;
@@ -64,6 +65,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             });
 
+            var apptDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppointmentsDbContext>));
+            if (apptDescriptor != null) services.Remove(apptDescriptor);
+
+            services.AddDbContext<AppointmentsDbContext>(options =>
+            {
+                options.UseNpgsql(_dbContainer.GetConnectionString());
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            });
+
             var emailServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
             if (emailServiceDescriptor != null) services.Remove(emailServiceDescriptor);
             services.AddScoped<IEmailService, TestEmailService>();
@@ -75,11 +85,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             var billingDb = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
             var petsDb = scope.ServiceProvider.GetRequiredService<PetsDbContext>();
             var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
 
             identityDb.Database.Migrate();
             billingDb.Database.Migrate();
             petsDb.Database.Migrate();
             catalogDb.Database.Migrate();
+            apptDb.Database.Migrate();
         });
     }
 

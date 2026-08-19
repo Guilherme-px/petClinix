@@ -51,6 +51,11 @@ using PetClinix.Modules.Catalog.Application.UseCases.DeactivateService;
 using PetClinix.Modules.Catalog.Domain.Repositories;
 using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Catalog.Infrastructure.Repositories;
+using PetClinix.Modules.Appointments.Application.Contracts;
+using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
+using PetClinix.Modules.Appointments.Domain.Repositories;
+using PetClinix.Modules.Appointments.Infrastructure.Persistence;
+using PetClinix.Modules.Appointments.Infrastructure.Repositories;
 using System.Text;
 using System.Threading.RateLimiting;
 using Resend;
@@ -89,6 +94,9 @@ builder.Services.AddDbContext<PetsDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddDbContext<AppointmentsDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
@@ -135,6 +143,9 @@ builder.Services.AddScoped<ICommandHandler<RegisterServiceCommand, Result>, Regi
 builder.Services.AddScoped<ICommandHandler<GetServicesQuery, Result<PagedResult<ServiceResponse>>>, GetServicesQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateServiceCommand, Result>, UpdateServiceCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeactivateServiceCommand, Result>, DeactivateServiceCommandHandler>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IAppointmentsUnitOfWork, PetClinix.Modules.Appointments.Infrastructure.Persistence.UnitOfWork>();
+builder.Services.AddScoped<ICommandHandler<RegisterAppointmentCommand, Result>, RegisterAppointmentCommandHandler>();
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
