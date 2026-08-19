@@ -306,6 +306,71 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task GetAppointmentById_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.GetAsync($"/api/appointments/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetAppointmentById_Should_Return_404_When_Appointment_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var response = await _client.GetAsync($"/api/appointments/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task GetAppointmentById_Should_Return_200_And_Appointment_Data_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tomorrow = DateTime.UtcNow.AddDays(1);
+        var apptDate = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 11, 0, 0, DateTimeKind.Utc);
+        var apptRequest = new
+        {
+            TutorId = Guid.NewGuid(),
+            PetId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid(),
+            VeterinarianId = Guid.NewGuid(),
+            ScheduledDateUtc = apptDate,
+            Notes = "Agendamento para teste de detalhe"
+        };
+        await _client.PostAsJsonAsync("/api/appointments", apptRequest);
+
+        Guid appointmentId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+            var savedAppt = await apptDb.Appointments.FirstOrDefaultAsync(a => a.ClinicId == clinicId);
+            appointmentId = savedAppt!.Id;
+        }
+
+        var response = await _client.GetAsync($"/api/appointments/{appointmentId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<AppointmentDetailResponse>();
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(appointmentId);
+        result.Notes.Should().Be("Agendamento para teste de detalhe");
+        result.Status.Should().Be(1);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedAppointmentResponse
@@ -317,6 +382,18 @@ public class PagedAppointmentResponse
 }
 
 public class AppointmentItemResponse
+{
+    public Guid Id { get; set; }
+    public Guid TutorId { get; set; }
+    public Guid PetId { get; set; }
+    public Guid ServiceId { get; set; }
+    public Guid VeterinarianId { get; set; }
+    public DateTime ScheduledDateUtc { get; set; }
+    public string? Notes { get; set; }
+    public int Status { get; set; }
+}
+
+public class AppointmentDetailResponse
 {
     public Guid Id { get; set; }
     public Guid TutorId { get; set; }
