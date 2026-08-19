@@ -8,11 +8,16 @@ public sealed class DeactivateStaffCommandHandler : ICommandHandler<DeactivateSt
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAppointmentDependencyChecker _appointmentDependencyChecker;
 
-    public DeactivateStaffCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+    public DeactivateStaffCommandHandler(
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        IAppointmentDependencyChecker appointmentDependencyChecker)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
+        _appointmentDependencyChecker = appointmentDependencyChecker;
     }
 
     public async Task<Result> Handle(DeactivateStaffCommand command, CancellationToken cancellationToken)
@@ -27,6 +32,11 @@ public sealed class DeactivateStaffCommandHandler : ICommandHandler<DeactivateSt
         if (user.Role == UserRole.Admin)
         {
             return Result.Failure("identity.user.cannot_deactivate_admin", "Não é possível desativar o perfil do Admin por esta rota.");
+        }
+
+        if (await _appointmentDependencyChecker.HasFutureAppointmentsForVetAsync(user.Id, cancellationToken))
+        {
+            return Result.Failure("identity.user.has_future_appointments", "Não é possível desativar o profissional pois existem agendamentos futuros vinculados a ele.");
         }
 
         user.Deactivate();

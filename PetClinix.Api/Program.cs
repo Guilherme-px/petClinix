@@ -42,6 +42,7 @@ using PetClinix.Modules.Pets.Application.UseCases.RegisterPet;
 using PetClinix.Modules.Pets.Application.UseCases.GetPets;
 using PetClinix.Modules.Pets.Application.UseCases.UpdatePet;
 using PetClinix.Modules.Pets.Application.UseCases.DeactivatePet;
+using PetClinix.Modules.Pets.Application.Contracts;
 using PetClinix.Modules.Pets.Domain.Repositories;
 using PetClinix.Modules.Catalog.Application.Contracts;
 using PetClinix.Modules.Catalog.Application.UseCases.RegisterService;
@@ -122,7 +123,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateClinicCommand, Result>, UpdateC
 builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, UpdateAccountCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
-builder.Services.AddScoped<PetClinix.Modules.Identity.Application.Contracts.ISubscriptionStatusService, PetClinix.Modules.Billing.Infrastructure.Services.SubscriptionStatusService>();
+builder.Services.AddScoped<ISubscriptionStatusService, SubscriptionStatusService>();
 builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result>, RegisterStaffCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>>, GetStaffQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>>, GetStaffByIdQueryHandler>();
@@ -130,7 +131,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateStaffCommand, Result>, UpdateSt
 builder.Services.AddScoped<ICommandHandler<DeactivateStaffCommand, Result>, DeactivateStaffCommandHandler>();
 builder.Services.AddScoped<ITutorRepository, TutorRepository>();
 builder.Services.AddScoped<ICommandHandler<RegisterTutorCommand, Result>, RegisterTutorCommandHandler>();
-builder.Services.AddScoped<PetClinix.Modules.Pets.Application.Contracts.IPetsUnitOfWork, PetClinix.Modules.Pets.Infrastructure.Persistence.UnitOfWork>();
+builder.Services.AddScoped<IPetsUnitOfWork, PetClinix.Modules.Pets.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<GetTutorsQuery, Result<PagedResult<TutorResponse>>>, GetTutorsQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetTutorByIdQuery, Result<TutorResponse>>, GetTutorByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateTutorCommand, Result>, UpdateTutorCommandHandler>();
@@ -155,6 +156,8 @@ builder.Services.AddScoped<ICommandHandler<GetAppointmentsQuery, Result<PagedRes
 builder.Services.AddScoped<ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>>, GetAppointmentByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateAppointmentCommand, Result>, UpdateAppointmentCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateAppointmentStatusCommand, Result>, UpdateAppointmentStatusCommandHandler>();
+builder.Services.AddScoped<IPetDependencyChecker, PetClinix.Modules.Pets.Infrastructure.Services.PetDependencyChecker>();
+builder.Services.AddScoped<IAppointmentDependencyChecker, AppointmentDependencyChecker>();
 
 builder.Services.AddSingleton<IClinicScheduleService>(new MockClinicScheduleService());
 

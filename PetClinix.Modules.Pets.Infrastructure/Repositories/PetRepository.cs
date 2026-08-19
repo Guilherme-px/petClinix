@@ -49,4 +49,9 @@ public class PetRepository : IPetRepository
     {
         _context.Pets.Update(pet);
     }
+
+    public async Task<bool> ExistsActiveByTutorIdAsync(Guid tutorId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Pets.AnyAsync(p => p.TutorId == tutorId && p.IsActive, cancellationToken);
+    }
 }

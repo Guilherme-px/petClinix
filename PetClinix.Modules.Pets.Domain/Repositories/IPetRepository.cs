@@ -9,4 +9,5 @@ public interface IPetRepository
     Task<(IEnumerable<Pet> Pets, int TotalCount)> GetAllByTutorIdAsync(Guid clinicId, Guid tutorId, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAndTutorAsync(Guid tutorId, string name, CancellationToken cancellationToken = default);
     Task UpdateAsync(Pet pet, CancellationToken cancellationToken = default);
+    Task<bool> ExistsActiveByTutorIdAsync(Guid tutorId, CancellationToken cancellationToken = default);
 }

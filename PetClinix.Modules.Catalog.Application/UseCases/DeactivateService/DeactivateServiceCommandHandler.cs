@@ -8,11 +8,16 @@ public sealed class DeactivateServiceCommandHandler : ICommandHandler<Deactivate
 {
     private readonly IServiceRepository _serviceRepository;
     private readonly ICatalogUnitOfWork _unitOfWork;
+    private readonly IAppointmentDependencyChecker _appointmentDependencyChecker;
 
-    public DeactivateServiceCommandHandler(IServiceRepository serviceRepository, ICatalogUnitOfWork unitOfWork)
+    public DeactivateServiceCommandHandler(
+        IServiceRepository serviceRepository,
+        ICatalogUnitOfWork unitOfWork,
+        IAppointmentDependencyChecker appointmentDependencyChecker)
     {
         _serviceRepository = serviceRepository;
         _unitOfWork = unitOfWork;
+        _appointmentDependencyChecker = appointmentDependencyChecker;
     }
 
     public async Task<Result> Handle(DeactivateServiceCommand command, CancellationToken cancellationToken)
@@ -22,6 +27,11 @@ public sealed class DeactivateServiceCommandHandler : ICommandHandler<Deactivate
         if (service == null || service.ClinicId != command.ClinicId)
         {
             return Result.Failure("catalog.service.not_found", "Serviço não encontrado nesta clínica.");
+        }
+
+        if (await _appointmentDependencyChecker.HasFutureAppointmentsForServiceAsync(service.Id, cancellationToken))
+        {
+            return Result.Failure("catalog.service.has_future_appointments", "Não é possível desativar o serviço pois existem agendamentos futuros vinculados a ele.");
         }
 
         service.Deactivate();
