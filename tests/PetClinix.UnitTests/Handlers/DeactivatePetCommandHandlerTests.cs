@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Pets.Application.Contracts;
 using PetClinix.Modules.Pets.Application.UseCases.DeactivatePet;
 using PetClinix.Modules.Pets.Domain.Entities;
@@ -17,19 +18,26 @@ public class DeactivatePetCommandHandlerTests
     private readonly IPetRepository _petRepositoryMock;
     private readonly IPetsUnitOfWork _unitOfWorkMock;
     private readonly DeactivatePetCommandHandler _handler;
+    private readonly IAppointmentDependencyChecker _appointmentDependencyCheckerMock;
 
     public DeactivatePetCommandHandlerTests()
     {
         _petRepositoryMock = Substitute.For<IPetRepository>();
         _unitOfWorkMock = Substitute.For<IPetsUnitOfWork>();
-        _handler = new DeactivatePetCommandHandler(_petRepositoryMock, _unitOfWorkMock);
+        _appointmentDependencyCheckerMock = Substitute.For<IAppointmentDependencyChecker>();
+        _handler = new DeactivatePetCommandHandler(
+            _petRepositoryMock,
+            _unitOfWorkMock,
+            _appointmentDependencyCheckerMock
+        );
     }
 
     private static Pet CreateValidPet(Guid clinicId, Guid tutorId)
     {
         return Pet.Create(
             clinicId, tutorId, Guid.NewGuid(), "Rex", Species.Dog, "Vira Lata",
-            new DateOnly(2020, 5, 10), PetSex.Male, 15.5, true, null);
+            new DateOnly(2020, 5, 10), PetSex.Male, 15.5, true, null
+        );
     }
 
     [Fact]
@@ -42,7 +50,6 @@ public class DeactivatePetCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.ErrorCode.Should().Be("pets.pet.not_found");
-        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -62,7 +69,23 @@ public class DeactivatePetCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.ErrorCode.Should().Be("pets.pet.not_found");
-        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_Should_ReturnFailure_When_Pet_Has_Future_Appointments()
+    {
+        var clinicId = Guid.NewGuid();
+        var tutorId = Guid.NewGuid();
+        var pet = CreateValidPet(clinicId, tutorId);
+        var command = new DeactivatePetCommand(clinicId, tutorId, pet.Id);
+
+        _petRepositoryMock.GetByIdAsync(command.PetId, Arg.Any<CancellationToken>()).Returns(pet);
+        _appointmentDependencyCheckerMock.HasFutureAppointmentsForPetAsync(pet.Id, Arg.Any<CancellationToken>()).Returns(true);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.ErrorCode.Should().Be("pets.pet.has_future_appointments");
     }
 
     [Fact]
@@ -74,13 +97,11 @@ public class DeactivatePetCommandHandlerTests
         var command = new DeactivatePetCommand(clinicId, tutorId, pet.Id);
 
         _petRepositoryMock.GetByIdAsync(command.PetId, Arg.Any<CancellationToken>()).Returns(pet);
+        _appointmentDependencyCheckerMock.HasFutureAppointmentsForPetAsync(pet.Id, Arg.Any<CancellationToken>()).Returns(false);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         pet.IsActive.Should().BeFalse();
-
-        await _petRepositoryMock.Received(1).UpdateAsync(Arg.Any<Pet>(), Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

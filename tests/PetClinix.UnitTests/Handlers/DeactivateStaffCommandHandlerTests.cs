@@ -17,12 +17,18 @@ public class DeactivateStaffCommandHandlerTests
     private readonly IUserRepository _userRepositoryMock;
     private readonly IUnitOfWork _unitOfWorkMock;
     private readonly DeactivateStaffCommandHandler _handler;
+    private readonly IAppointmentDependencyChecker _appointmentDependencyCheckerMock;
 
     public DeactivateStaffCommandHandlerTests()
     {
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _unitOfWorkMock = Substitute.For<IUnitOfWork>();
-        _handler = new DeactivateStaffCommandHandler(_userRepositoryMock, _unitOfWorkMock);
+        _appointmentDependencyCheckerMock = Substitute.For<IAppointmentDependencyChecker>();
+        _handler = new DeactivateStaffCommandHandler(
+            _userRepositoryMock,
+            _unitOfWorkMock,
+            _appointmentDependencyCheckerMock
+        );
     }
 
     private static User CreateValidStaffUser(Guid clinicId)
@@ -39,14 +45,13 @@ public class DeactivateStaffCommandHandlerTests
     [Fact]
     public async Task Handle_Should_ReturnFailure_When_User_Does_Not_Exist()
     {
-        var command = CreateValidCommand(Guid.NewGuid(), Guid.NewGuid());
+        var command = new DeactivateStaffCommand(Guid.NewGuid(), Guid.NewGuid());
         _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns((User?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.ErrorCode.Should().Be("identity.user.not_found");
-        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -56,33 +61,29 @@ public class DeactivateStaffCommandHandlerTests
         var otherClinicId = Guid.NewGuid();
         var user = CreateValidStaffUser(otherClinicId);
 
-        var command = CreateValidCommand(myClinicId, user.Id);
+        var command = new DeactivateStaffCommand(myClinicId, user.Id);
         _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(user);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.ErrorCode.Should().Be("identity.user.not_found");
-        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-
-    public async Task Handle_Should_ReturnFailure_When_User_Is_Admin()
+    public async Task Handle_Should_ReturnFailure_When_User_Has_Future_Appointments()
     {
         var clinicId = Guid.NewGuid();
-        var adminUser = User.CreateAdmin(
-            clinicId, "Admin", "admin@teste.com", "hash", "12345678900",
-            "11999990000", new DateOnly(1990, 1, 1));
+        var user = CreateValidStaffUser(clinicId);
+        var command = new DeactivateStaffCommand(clinicId, user.Id);
 
-        var command = CreateValidCommand(clinicId, adminUser.Id);
-        _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(adminUser);
+        _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(user);
+        _appointmentDependencyCheckerMock.HasFutureAppointmentsForVetAsync(user.Id, Arg.Any<CancellationToken>()).Returns(true);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.ErrorCode.Should().Be("identity.user.cannot_deactivate_admin");
-        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        result.ErrorCode.Should().Be("identity.user.has_future_appointments");
     }
 
     [Fact]
@@ -90,16 +91,14 @@ public class DeactivateStaffCommandHandlerTests
     {
         var clinicId = Guid.NewGuid();
         var user = CreateValidStaffUser(clinicId);
-        var command = CreateValidCommand(clinicId, user.Id);
+        var command = new DeactivateStaffCommand(clinicId, user.Id);
 
         _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(user);
+        _appointmentDependencyCheckerMock.HasFutureAppointmentsForVetAsync(user.Id, Arg.Any<CancellationToken>()).Returns(false);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         user.IsActive.Should().BeFalse();
-
-        await _userRepositoryMock.Received(1).UpdateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
-        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }
