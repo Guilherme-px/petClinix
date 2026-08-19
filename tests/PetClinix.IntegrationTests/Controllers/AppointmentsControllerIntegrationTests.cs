@@ -472,6 +472,80 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
+
+    [Fact]
+    public async Task UpdateAppointmentStatus_Should_Return_401_When_No_Token_Provided()
+    {
+        var statusRequest = new { NewStatus = 2 };
+        var response = await _client.PatchAsJsonAsync($"/api/appointments/{Guid.NewGuid()}/status", statusRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateAppointmentStatus_Should_Return_400_When_Appointment_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var statusRequest = new { NewStatus = 2 }; 
+        var response = await _client.PatchAsJsonAsync($"/api/appointments/{Guid.NewGuid()}/status", statusRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        errorContent!.ErrorCode.Should().Be("appointments.appt.not_found");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateAppointmentStatus_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var tomorrow = DateTime.UtcNow.AddDays(1);
+        var apptDate = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 14, 0, 0, DateTimeKind.Utc);
+        var apptRequest = new
+        {
+            TutorId = Guid.NewGuid(),
+            PetId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid(),
+            VeterinarianId = Guid.NewGuid(),
+            ScheduledDateUtc = apptDate,
+            Notes = "Agendamento para mudar status"
+        };
+        await _client.PostAsJsonAsync("/api/appointments", apptRequest);
+
+        Guid appointmentId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+            var savedAppt = await apptDb.Appointments.FirstOrDefaultAsync(a => a.ClinicId == clinicId);
+            appointmentId = savedAppt!.Id;
+        }
+
+        var statusRequest = new { NewStatus = 4 };
+        var response = await _client.PatchAsJsonAsync($"/api/appointments/{appointmentId}/status", statusRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+            var updatedAppt = await apptDb.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            updatedAppt.Should().NotBeNull();
+            updatedAppt!.Status.Should().Be(PetClinix.Modules.Appointments.Domain.Enums.AppointmentStatus.Canceled);
+            updatedAppt.UpdatedByUserId.Should().Be(userId); 
+        }
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
 }
 
 public class PagedAppointmentResponse
