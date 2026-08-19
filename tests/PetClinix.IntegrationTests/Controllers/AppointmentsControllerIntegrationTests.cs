@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PetClinix.Modules.Appointments.Infrastructure.Persistence;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
+using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Identity.Infrastructure.Persistence;
 using Xunit;
 
@@ -137,7 +138,7 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
         var (email, password, userId, clinicId) = await SetupAdminAsync();
         var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-        
+
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
 
         var vetId = Guid.NewGuid();
@@ -158,10 +159,10 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
 
         var secondRequest = new
         {
-            TutorId = Guid.NewGuid(), 
+            TutorId = Guid.NewGuid(),
             PetId = Guid.NewGuid(),
             ServiceId = Guid.NewGuid(),
-            VeterinarianId = vetId, 
+            VeterinarianId = vetId,
             ScheduledDateUtc = scheduledDate,
             Notes = "Tentativa de conflito"
         };
@@ -171,6 +172,71 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
 
         var errorContent = await secondResponse.Content.ReadFromJsonAsync<ErrorResponse>();
         errorContent!.ErrorCode.Should().Be("appointments.appt.slot_taken");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task GetAvailableSlots_Should_Return_401_When_No_Token_Provided()
+    {
+        var response = await _client.GetAsync($"/api/appointments/available-slots?vetId={Guid.NewGuid()}&serviceId={Guid.NewGuid()}&date={DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)):yyyy-MM-dd}");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlots_Should_Return_200_And_Skip_Conflicting_Slot()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var serviceRequest = new
+        {
+            Name = "Consulta Slots Test",
+            Description = "Teste de slot",
+            DurationInMinutes = 30,
+            Price = 100.0m,
+            RequiresVeterinarian = true
+        };
+        var serviceResponse = await _client.PostAsJsonAsync("/api/services", serviceRequest);
+
+        Guid serviceId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var catalogDb = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var savedService = await catalogDb.Services.FirstOrDefaultAsync(s => s.ClinicId == clinicId);
+            serviceId = savedService!.Id;
+        }
+
+        var vetId = Guid.NewGuid();
+        var testDate = DateTime.UtcNow.AddDays(2);
+        var dateOnly = DateOnly.FromDateTime(testDate);
+        var apptDate = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, 9, 0, 0, DateTimeKind.Utc);
+        var apptRequest = new
+        {
+            TutorId = Guid.NewGuid(),
+            PetId = Guid.NewGuid(),
+            ServiceId = serviceId,
+            VeterinarianId = vetId,
+            ScheduledDateUtc = apptDate,
+            Notes = "Ocupando slot das 09:00"
+        };
+        var apptResponse = await _client.PostAsJsonAsync("/api/appointments", apptRequest);
+        apptResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var query = $"/api/appointments/available-slots?vetId={vetId}&serviceId={serviceId}&date={dateOnly:yyyy-MM-dd}";
+        var response = await _client.GetAsync(query);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var slots = await response.Content.ReadFromJsonAsync<List<string>>();
+        slots.Should().NotBeNull();
+
+        slots.Should().NotContain("09:00");
+        slots.Should().Contain("08:00");
+        slots.Should().Contain("09:30");
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
