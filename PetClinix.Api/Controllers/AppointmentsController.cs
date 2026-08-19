@@ -5,6 +5,8 @@ using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
 using PetClinix.Modules.Appointments.Application.UseCases.GetAvailableSlots;
 using PetClinix.Modules.Appointments.Application.UseCases.GetAppointments;
 using PetClinix.Modules.Appointments.Application.UseCases.UpdateAppointment;
+using PetClinix.Modules.Appointments.Application.UseCases.UpdateAppointmentStatus;
+using PetClinix.Modules.Appointments.Domain.Enums;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -19,19 +21,22 @@ public class AppointmentsController : ControllerBase
     private readonly ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> _getAppointmentsHandler;
     private readonly ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>> _getAppointmentByIdHandler;
     private readonly ICommandHandler<UpdateAppointmentCommand, Result> _updateAppointmentHandler;
+    private readonly ICommandHandler<UpdateAppointmentStatusCommand, Result> _updateStatusHandler;
 
     public AppointmentsController(
         ICommandHandler<RegisterAppointmentCommand, Result> registerAppointmentHandler,
         ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> getSlotsHandler,
         ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> getAppointmentsHandler,
         ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>> getAppointmentByIdHandler,
-        ICommandHandler<UpdateAppointmentCommand, Result> updateAppointmentHandler)
+        ICommandHandler<UpdateAppointmentCommand, Result> updateAppointmentHandler,
+        ICommandHandler<UpdateAppointmentStatusCommand, Result> updateStatusHandler)
     {
         _registerAppointmentHandler = registerAppointmentHandler;
         _getSlotsHandler = getSlotsHandler;
         _getAppointmentsHandler = getAppointmentsHandler;
         _getAppointmentByIdHandler = getAppointmentByIdHandler;
         _updateAppointmentHandler = updateAppointmentHandler;
+        _updateStatusHandler = updateStatusHandler;
     }
 
     [HttpPost]
@@ -142,6 +147,28 @@ public class AppointmentsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPatch("{appointmentId}/status")]
+    public async Task<IActionResult> UpdateAppointmentStatus(Guid appointmentId, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Token inválido." });
+        }
+
+        var command = new UpdateAppointmentStatusCommand(clinicId, appointmentId, userId, request.NewStatus);
+        var result = await _updateStatusHandler.Handle(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
 
 public record RegisterAppointmentRequest(
@@ -150,8 +177,10 @@ public record RegisterAppointmentRequest(
 );
 
 public record UpdateAppointmentRequest(
-    Guid VeterinarianId, 
-    Guid ServiceId, 
-    DateTime ScheduledDateUtc, 
+    Guid VeterinarianId,
+    Guid ServiceId,
+    DateTime ScheduledDateUtc,
     string? Notes
 );
+
+public record UpdateStatusRequest(AppointmentStatus NewStatus);
