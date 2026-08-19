@@ -16,15 +16,18 @@ public class AppointmentsController : ControllerBase
     private readonly ICommandHandler<RegisterAppointmentCommand, Result> _registerAppointmentHandler;
     private readonly ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> _getSlotsHandler;
     private readonly ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> _getAppointmentsHandler;
+    private readonly ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>> _getAppointmentByIdHandler;
 
     public AppointmentsController(
         ICommandHandler<RegisterAppointmentCommand, Result> registerAppointmentHandler,
         ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> getSlotsHandler,
-        ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> getAppointmentsHandler)
+        ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>> getAppointmentsHandler,
+        ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>> getAppointmentByIdHandler)
     {
         _registerAppointmentHandler = registerAppointmentHandler;
         _getSlotsHandler = getSlotsHandler;
         _getAppointmentsHandler = getAppointmentsHandler;
+        _getAppointmentByIdHandler = getAppointmentByIdHandler;
     }
 
     [HttpPost]
@@ -68,6 +71,27 @@ public class AppointmentsController : ControllerBase
         if (result.IsFailure)
         {
             return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{appointmentId}")]
+    public async Task<IActionResult> GetAppointmentById(Guid appointmentId, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido." });
+        }
+
+        var query = new GetAppointmentByIdQuery(clinicId, appointmentId);
+        var result = await _getAppointmentByIdHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { result.ErrorCode, result.ErrorMessage });
         }
 
         return Ok(result.Value);

@@ -150,6 +150,7 @@ builder.Services.AddScoped<IAppointmentsUnitOfWork, PetClinix.Modules.Appointmen
 builder.Services.AddScoped<ICommandHandler<RegisterAppointmentCommand, Result>, RegisterAppointmentCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>>, GetAvailableSlotsQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetAppointmentsQuery, Result<PagedResult<AppointmentResponse>>>, GetAppointmentsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<GetAppointmentByIdQuery, Result<AppointmentResponse>>, GetAppointmentByIdQueryHandler>();
 
 builder.Services.AddSingleton<IClinicScheduleService>(new MockClinicScheduleService());
 
