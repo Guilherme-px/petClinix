@@ -320,7 +320,7 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
         var (email, password, userId, clinicId) = await SetupAdminAsync();
         var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
-        
+
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
 
         var response = await _client.GetAsync($"/api/appointments/{Guid.NewGuid()}");
@@ -368,6 +368,107 @@ public class AppointmentsControllerIntegrationTests : IClassFixture<CustomWebApp
         result!.Id.Should().Be(appointmentId);
         result.Notes.Should().Be("Agendamento para teste de detalhe");
         result.Status.Should().Be(1);
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateAppointment_Should_Return_401_When_No_Token_Provided()
+    {
+        var updateRequest = new
+        {
+            VeterinarianId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid(),
+            ScheduledDateUtc = DateTime.UtcNow.AddDays(2),
+            Notes = "Sem token"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/appointments/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateAppointment_Should_Return_400_When_Appointment_Does_Not_Exist()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var updateRequest = new
+        {
+            VeterinarianId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid(),
+            ScheduledDateUtc = DateTime.UtcNow.AddDays(2),
+            Notes = "Agendamento inexistente"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/appointments/{Guid.NewGuid()}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        errorContent!.ErrorCode.Should().Be("appointments.appt.not_found");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    [Fact]
+    public async Task UpdateAppointment_Should_Return_204_And_Update_Db_When_Valid()
+    {
+        var (email, password, userId, clinicId) = await SetupAdminAsync();
+        var loginResponse = await _client.PostAsJsonAsync("/api/users/login", new { Email = email, Password = password });
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
+
+        var vetId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        var tomorrow = DateTime.UtcNow.AddDays(1);
+        var initialDate = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 10, 0, 0, DateTimeKind.Utc);
+
+        var apptRequest = new
+        {
+            TutorId = Guid.NewGuid(),
+            PetId = Guid.NewGuid(),
+            ServiceId = serviceId,
+            VeterinarianId = vetId,
+            ScheduledDateUtc = initialDate,
+            Notes = "Notas originais"
+        };
+        await _client.PostAsJsonAsync("/api/appointments", apptRequest);
+
+        Guid appointmentId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+            var savedAppt = await apptDb.Appointments.FirstOrDefaultAsync(a => a.VeterinarianId == vetId);
+            appointmentId = savedAppt!.Id;
+        }
+
+        var newDate = initialDate.AddHours(2);
+        var updateRequest = new
+        {
+            VeterinarianId = vetId,
+            ServiceId = serviceId,
+            ScheduledDateUtc = newDate,
+            Notes = "Notas atualizadas via PUT"
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/appointments/{appointmentId}", updateRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var apptDb = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+            var updatedAppt = await apptDb.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            updatedAppt.Should().NotBeNull();
+            updatedAppt!.Notes.Should().Be("Notas atualizadas via PUT");
+
+            updatedAppt.ScheduledDateUtc.ToString("yyyy-MM-dd HH:mm").Should().Be(newDate.ToString("yyyy-MM-dd HH:mm"));
+            updatedAppt.UpdatedByUserId.Should().Be(userId);
+        }
 
         _client.DefaultRequestHeaders.Authorization = null;
     }
