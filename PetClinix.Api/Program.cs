@@ -53,6 +53,7 @@ using PetClinix.Modules.Catalog.Infrastructure.Persistence;
 using PetClinix.Modules.Catalog.Infrastructure.Repositories;
 using PetClinix.Modules.Appointments.Application.Contracts;
 using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
+using PetClinix.Modules.Appointments.Application.UseCases.GetAvailableSlots;
 using PetClinix.Modules.Appointments.Domain.Repositories;
 using PetClinix.Modules.Appointments.Infrastructure.Persistence;
 using PetClinix.Modules.Appointments.Infrastructure.Repositories;
@@ -146,6 +147,15 @@ builder.Services.AddScoped<ICommandHandler<DeactivateServiceCommand, Result>, De
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentsUnitOfWork, PetClinix.Modules.Appointments.Infrastructure.Persistence.UnitOfWork>();
 builder.Services.AddScoped<ICommandHandler<RegisterAppointmentCommand, Result>, RegisterAppointmentCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>>, GetAvailableSlotsQueryHandler>();
+
+builder.Services.AddSingleton<IClinicScheduleService>(new MockClinicScheduleService());
+
+builder.Services.AddScoped<IServiceCatalogService>(sp =>
+{
+    var catalogDb = sp.GetRequiredService<CatalogDbContext>();
+    return new CatalogServiceAdapter(catalogDb);
+});
 
 builder.Services.Configure<ResendClientOptions>(opt =>
 {
@@ -221,5 +231,22 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public class MockClinicScheduleService : IClinicScheduleService
+{
+    public (TimeOnly Start, TimeOnly End) GetWorkingHours() => (new TimeOnly(8, 0), new TimeOnly(18, 0));
+}
+
+public class CatalogServiceAdapter : IServiceCatalogService
+{
+    private readonly CatalogDbContext _context;
+    public CatalogServiceAdapter(CatalogDbContext context) => _context = context;
+
+    public async Task<int> GetDurationInMinutesAsync(Guid serviceId, CancellationToken cancellationToken = default)
+    {
+        var service = await _context.Services.FindAsync([serviceId], cancellationToken);
+        return service?.DurationInMinutes ?? 0;
+    }
+}
 
 public partial class Program { }

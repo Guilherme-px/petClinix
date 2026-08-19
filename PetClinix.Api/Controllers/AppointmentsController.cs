@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Appointments.Application.UseCases.RegisterAppointment;
+using PetClinix.Modules.Appointments.Application.UseCases.GetAvailableSlots;
 using System.Security.Claims;
 
 namespace PetClinix.Api.Controllers;
@@ -12,10 +13,14 @@ namespace PetClinix.Api.Controllers;
 public class AppointmentsController : ControllerBase
 {
     private readonly ICommandHandler<RegisterAppointmentCommand, Result> _registerAppointmentHandler;
+    private readonly ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> _getSlotsHandler;
 
-    public AppointmentsController(ICommandHandler<RegisterAppointmentCommand, Result> registerAppointmentHandler)
+    public AppointmentsController(
+        ICommandHandler<RegisterAppointmentCommand, Result> registerAppointmentHandler,
+        ICommandHandler<GetAvailableSlotsQuery, Result<List<string>>> getSlotsHandler)
     {
         _registerAppointmentHandler = registerAppointmentHandler;
+        _getSlotsHandler = getSlotsHandler;
     }
 
     [HttpPost]
@@ -42,6 +47,26 @@ public class AppointmentsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("available-slots")]
+    public async Task<IActionResult> GetAvailableSlots([FromQuery] Guid vetId, [FromQuery] Guid serviceId, [FromQuery] DateOnly date, CancellationToken cancellationToken)
+    {
+        var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        {
+            return Unauthorized(new { message = "Token inválido." });
+        }
+
+        var query = new GetAvailableSlotsQuery(clinicId, vetId, serviceId, date);
+        var result = await _getSlotsHandler.Handle(query, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new { result.ErrorCode, result.ErrorMessage });
+        }
+
+        return Ok(result.Value);
     }
 }
 
