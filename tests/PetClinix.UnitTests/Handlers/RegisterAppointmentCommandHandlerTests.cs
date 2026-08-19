@@ -41,7 +41,7 @@ public class RegisterAppointmentCommandHandlerTests
             command.ScheduledDateUtc, null, Guid.NewGuid()
         );
 
-        _appointmentRepositoryMock.GetByVeterinarianAndDateAsync(command.VeterinarianId, command.ScheduledDateUtc, Arg.Any<CancellationToken>())
+        _appointmentRepositoryMock.GetByVeterinarianAndDateAsync(command.VeterinarianId, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(new List<Appointment> { existingAppointment });
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -71,7 +71,7 @@ public class RegisterAppointmentCommandHandlerTests
     {
         var command = CreateValidCommand();
 
-        _appointmentRepositoryMock.GetByVeterinarianAndDateAsync(command.VeterinarianId, command.ScheduledDateUtc, Arg.Any<CancellationToken>())
+        _appointmentRepositoryMock.GetByVeterinarianAndDateAsync(command.VeterinarianId, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(new List<Appointment>());
 
         var result = await _handler.Handle(command, CancellationToken.None);
