@@ -240,6 +240,33 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try 
+    {
+        var identityDb = services.GetRequiredService<IdentityDbContext>();
+        identityDb.Database.Migrate();
+
+        var billingDb = services.GetRequiredService<BillingDbContext>();
+        billingDb.Database.Migrate();
+
+        var petsDb = services.GetRequiredService<PetsDbContext>();
+        petsDb.Database.Migrate();
+
+        var catalogDb = services.GetRequiredService<CatalogDbContext>();
+        catalogDb.Database.Migrate();
+
+        var apptDb = services.GetRequiredService<AppointmentsDbContext>();
+        apptDb.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocorreu um erro ao rodar as migrations no banco de dados.");
+    }
+}
+
 app.Run();
 
 public class MockClinicScheduleService : IClinicScheduleService
