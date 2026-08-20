@@ -26,8 +26,9 @@ public class RefreshTokenCommandHandlerTests
     private static User CreateValidUser()
     {
         return User.CreateAdmin(
-            Guid.NewGuid(), "Admin", "admin@test.com", "hash",
-            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@test.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
     }
 
     [Fact]

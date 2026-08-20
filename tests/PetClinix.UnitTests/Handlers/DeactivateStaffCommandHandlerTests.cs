@@ -34,7 +34,7 @@ public class DeactivateStaffCommandHandlerTests
     private static User CreateValidStaffUser(Guid clinicId)
     {
         return User.CreateStaff(
-            clinicId, "Dr. Dolittle", "dr@teste.com", "hash", "12345678900", "11999990000",
+            clinicId, Guid.NewGuid(), "Dr. Dolittle", "dr@teste.com", "hash", "12345678900", "11999990000",
             new DateOnly(1990, 1, 1), UserRole.Veterinarian
         );
     }

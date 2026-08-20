@@ -25,8 +25,9 @@ public class GetStaffByIdQueryHandlerTests
     private static User CreateValidUser(Guid clinicId)
     {
         return User.CreateStaff(
-            clinicId, "Staff Teste", "staff@teste.com", "hash", "12345678900",
-            "11999990000", new DateOnly(1990, 1, 1), UserRole.Veterinarian);
+            clinicId, Guid.NewGuid(), "Staff Teste", "staff@teste.com", "hash", "12345678900",
+            "11999990000", new DateOnly(1990, 1, 1), UserRole.Veterinarian
+        );
     }
 
     [Fact]

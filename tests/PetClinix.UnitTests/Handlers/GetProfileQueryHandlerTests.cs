@@ -26,12 +26,14 @@ public class GetProfileQueryHandlerTests
     {
         return User.CreateAdmin(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "Admin Teste",
             "admin@teste.com",
             "hash_senha",
             "12345678900",
             "11999990000",
-            new DateOnly(1990, 1, 1));
+            new DateOnly(1990, 1, 1)
+        );
     }
 
     private static Clinic CreateValidClinic(Guid clinicId)

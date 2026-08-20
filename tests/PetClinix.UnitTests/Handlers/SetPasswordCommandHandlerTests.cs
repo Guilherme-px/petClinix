@@ -49,7 +49,7 @@ public class SetPasswordCommandHandlerTests
     public async Task Handle_Should_ReturnFailure_When_Domain_Throws_Expiration_Error()
     {
         var command = CreateValidCommand();
-        var user = User.CreateAdmin(Guid.NewGuid(), "Admin", "admin@test.com", null, "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+        var user = User.CreateAdmin(Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@test.com", null, "12345678900", "11999990000", new DateOnly(1990, 1, 1));
 
         typeof(User).GetProperty("PasswordResetToken")!.SetValue(user, command.Token);
         typeof(User).GetProperty("PasswordResetTokenExpiresAtUtc")!.SetValue(user, DateTime.UtcNow.AddHours(-1)); 
@@ -69,7 +69,7 @@ public class SetPasswordCommandHandlerTests
     public async Task Handle_Should_ReturnSuccess_And_Update_User_When_Valid()
     {
         var command = CreateValidCommand();
-        var user = User.CreateAdmin(Guid.NewGuid(), "Admin", "admin@test.com", null, "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+        var user = User.CreateAdmin(Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@test.com", null, "12345678900", "11999990000", new DateOnly(1990, 1, 1));
 
         typeof(User).GetProperty("PasswordResetToken")!.SetValue(user, command.Token);
         typeof(User).GetProperty("PasswordResetTokenExpiresAtUtc")!.SetValue(user, DateTime.UtcNow.AddHours(1));

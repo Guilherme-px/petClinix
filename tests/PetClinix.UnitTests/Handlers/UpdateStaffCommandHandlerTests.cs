@@ -28,12 +28,14 @@ public class UpdateStaffCommandHandlerTests
     private static User CreateValidStaffUser(Guid clinicId)
     {
         return User.CreateStaff(
-            clinicId, "Dr. Dolittle", "dr@teste.com", "hash", "12345678900",
-            "11999990000", new DateOnly(1990, 1, 1), UserRole.Veterinarian);
+            clinicId, Guid.NewGuid(), "Dr. Dolittle", "dr@teste.com", "hash", "12345678900",
+            "11999990000", new DateOnly(1990, 1, 1), UserRole.Veterinarian
+        );
     }
 
     private static UpdateStaffCommand CreateValidCommand(Guid clinicId, Guid userId) => new(
-        clinicId, userId, "Novo Nome", "1188887777", new DateOnly(1991, 5, 10), UserRole.Receptionist);
+        clinicId, userId, Guid.NewGuid(), "Novo Nome", "1188887777", new DateOnly(1991, 5, 10), UserRole.Receptionist
+    );
 
     [Fact]
     public async Task Handle_Should_ReturnFailure_When_User_Does_Not_Exist()
@@ -68,8 +70,9 @@ public class UpdateStaffCommandHandlerTests
     {
         var clinicId = Guid.NewGuid();
         var adminUser = User.CreateAdmin(
-            clinicId, "Admin", "admin@teste.com", "hash", "12345678900",
-            "11999990000", new DateOnly(1990, 1, 1));
+            clinicId, Guid.NewGuid(), "Admin", "admin@teste.com", "hash", "12345678900",
+            "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         var command = CreateValidCommand(clinicId, adminUser.Id);
         _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(adminUser);

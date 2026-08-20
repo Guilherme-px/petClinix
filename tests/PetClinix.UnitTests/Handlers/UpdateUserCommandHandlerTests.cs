@@ -25,12 +25,14 @@ public class UpdateUserCommandHandlerTests
     private static User CreateValidUser()
     {
         return User.CreateAdmin(
-            Guid.NewGuid(), "Admin", "admin@test.com", "hash",
-            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@test.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
     }
 
     private static UpdateUserCommand CreateValidCommand(Guid userId) => new(
-        userId, "Novo Nome", "1188887777", new DateOnly(1991, 5, 10));
+        userId, Guid.NewGuid(), "Novo Nome", "1188887777", new DateOnly(1991, 5, 10)
+    );
 
     [Fact]
     public async Task Handle_Should_ReturnFailure_When_User_Does_Not_Exist()
@@ -49,7 +51,7 @@ public class UpdateUserCommandHandlerTests
     public async Task Handle_Should_ReturnFailure_When_Domain_Throws_Exception()
     {
         var user = CreateValidUser();
-        var command = new UpdateUserCommand(user.Id, "", "1188887777", new DateOnly(1991, 5, 10));
+        var command = new UpdateUserCommand(user.Id, Guid.NewGuid(), "", "1188887777", new DateOnly(1991, 5, 10));
 
         _userRepositoryMock.GetByIdAsync(command.UserId, Arg.Any<CancellationToken>()).Returns(user);
 

@@ -35,13 +35,15 @@ public class RegisterStaffCommandHandlerTests
     }
 
     private static RegisterStaffCommand CreateValidCommand() => new(
-       Guid.NewGuid(),
-       "Dr. Dolittle",
-       "dolittle@teste.com",
-       "12345678900",
-       "11999990000",
-       new DateOnly(1980, 10, 20),
-       UserRole.Veterinarian);
+        Guid.NewGuid(),
+        Guid.NewGuid(),
+        "Dr. Dolittle",
+        "dolittle@teste.com",
+        "12345678900",
+        "11999990000",
+        new DateOnly(1980, 10, 20),
+        UserRole.Veterinarian
+    );
 
     [Fact]
     public async Task Handle_Should_ReturnFailure_When_Staff_Limit_Is_Reached()

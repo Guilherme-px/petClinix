@@ -13,13 +13,9 @@ public class UserTests
     public void CreateAdmin_Should_Throw_Exception_When_ClinicId_Is_Empty()
     {
         Action act = () => User.CreateAdmin(
-            Guid.Empty,
-            "Admin",
-            "admin@pet.com",
-            "hash",
-            "12345678900",
-            "11999990000",
-            new DateOnly(1990, 1, 1));
+            Guid.Empty, Guid.NewGuid(), "Admin", "admin@pet.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         act.Should().Throw<IdentityDomainException>()
            .WithMessage("*A clínica do usuário é obrigatória.*");
@@ -29,13 +25,9 @@ public class UserTests
     public void CreateAdmin_Should_Throw_Exception_When_Name_Is_Empty()
     {
         Action act = () => User.CreateAdmin(
-            Guid.NewGuid(),
-            "",
-            "admin@pet.com",
-            "hash",
-            "12345678900",
-            "11999990000",
-            new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "", "admin@pet.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         act.Should().Throw<IdentityDomainException>()
            .WithMessage("*O nome do usuário é obrigatório.*");
@@ -44,14 +36,9 @@ public class UserTests
     [Fact]
     public void CreateAdmin_Should_Set_Role_To_Admin_And_Active_To_True()
     {
-        var user = User.CreateAdmin(
-            Guid.NewGuid(),
-            "Admin",
-            "admin@pet.com",
-            "hash",
-            "12345678900",
-            "11999990000",
-            new DateOnly(1990, 1, 1));
+        var user = User.CreateAdmin(Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@pet.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         user.Role.Should().Be(UserRole.Admin);
         user.IsActive.Should().BeTrue();
@@ -62,14 +49,9 @@ public class UserTests
     public void CreateStaff_Should_Throw_Exception_When_Role_Is_Admin()
     {
         Action act = () => User.CreateStaff(
-            Guid.NewGuid(),
-            "Staff",
-            "staff@pet.com",
-            "hash",
-            "12345678900",
-            "11999990000",
-            new DateOnly(1990, 1, 1),
-            UserRole.Admin);
+           Guid.NewGuid(), Guid.NewGuid(), "Staff", "staff@pet.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1), UserRole.Admin
+        );
 
         act.Should().Throw<IdentityDomainException>()
            .WithMessage("*Use a criação de administrador para cadastrar um usuário administrador.*");
@@ -79,13 +61,9 @@ public class UserTests
     public void Deactivate_Should_Set_IsActive_To_False()
     {
         var user = User.CreateAdmin(
-            Guid.NewGuid(),
-            "Admin",
-            "admin@pet.com",
-            "hash",
-            "12345678900",
-            "11999990000",
-            new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@pet.com", "hash",
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         user.Deactivate();
 
@@ -96,8 +74,9 @@ public class UserTests
     public void GeneratePasswordResetToken_Should_Set_Token_And_Expiry()
     {
         var user = User.CreateAdmin(
-            Guid.NewGuid(), "Admin", "admin@pet.com", null,
-            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         var token = user.GeneratePasswordResetToken();
 
@@ -111,8 +90,9 @@ public class UserTests
     public void SetPassword_Should_Throw_Exception_When_Token_Is_Invalid()
     {
         var user = User.CreateAdmin(
-            Guid.NewGuid(), "Admin", "admin@pet.com", null,
-            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         user.GeneratePasswordResetToken();
 
@@ -126,8 +106,9 @@ public class UserTests
     public void SetPassword_Should_Set_Hash_And_Clear_Token_When_Valid()
     {
         var user = User.CreateAdmin(
-            Guid.NewGuid(), "Admin", "admin@pet.com", null,
-            "12345678900", "11999990000", new DateOnly(1990, 1, 1));
+            Guid.NewGuid(), Guid.NewGuid(), "Admin", "admin@pet.com", null,
+            "12345678900", "11999990000", new DateOnly(1990, 1, 1)
+        );
 
         var token = user.GeneratePasswordResetToken();
 

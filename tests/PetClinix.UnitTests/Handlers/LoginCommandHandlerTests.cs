@@ -36,6 +36,7 @@ public class LoginCommandHandlerTests
     {
         var user = User.CreateAdmin(
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "Admin Teste",
             "admin@teste.com",
             passwordHash,
