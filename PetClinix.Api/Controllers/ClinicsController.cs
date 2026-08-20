@@ -71,9 +71,11 @@ public class ClinicsController : ControllerBase
     public async Task<IActionResult> RegisterStaff([FromBody] RegisterStaffRequest request, CancellationToken cancellationToken)
     {
         var clinicIdClaim = User.FindFirst("clinic_id")?.Value;
-        if (!Guid.TryParse(clinicIdClaim, out var clinicId))
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        if (!Guid.TryParse(clinicIdClaim, out var clinicId) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(new { message = "Token inválido ou sem ID da clínica." });
+            return Unauthorized(new { message = "Token inválido." });
         }
 
         if (!Enum.TryParse<UserRole>(request.Role, true, out var role) || role == UserRole.Admin)
@@ -82,9 +84,10 @@ public class ClinicsController : ControllerBase
         }
 
         var command = new RegisterStaffCommand(
-            clinicId,
+            clinicId, userId,
             request.Name, request.Email, request.DocumentNumber,
-            request.PhoneNumber, request.BirthDate, role);
+            request.PhoneNumber, request.BirthDate, role
+        );
 
         var result = await _registerStaffHandler.Handle(command, cancellationToken);
 
@@ -148,7 +151,7 @@ public class ClinicsController : ControllerBase
             return BadRequest(new { error = "invalid_role", message = "Role inválida. Use Veterinarian ou Receptionist." });
         }
 
-        var command = new UpdateStaffCommand(clinicId, userId, request.Name, request.PhoneNumber, request.BirthDate, role);
+        var command = new UpdateStaffCommand(clinicId, userId, userId, request.Name, request.PhoneNumber, request.BirthDate, role);
         var result = await _updateStaffHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)

@@ -47,13 +47,15 @@ public sealed class RegisterStaffCommandHandler : ICommandHandler<RegisterStaffC
         {
             var staffUser = User.CreateStaff(
                 command.ClinicId,
+                command.CreatedByUserId,
                 command.Name,
                 command.Email,
                 null,
                 command.DocumentNumber,
                 command.PhoneNumber,
                 command.BirthDate,
-                command.Role);
+                command.Role
+            );
 
             var token = staffUser.GeneratePasswordResetToken();
 

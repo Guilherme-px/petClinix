@@ -32,7 +32,7 @@ public sealed class UpdateStaffCommandHandler : ICommandHandler<UpdateStaffComma
 
         try
         {
-            user.UpdateStaffInfo(command.Name, command.PhoneNumber, command.BirthDate, command.Role);
+            user.UpdateStaffInfo(command.Name, command.PhoneNumber, command.BirthDate, command.Role, command.UpdatedByUserId);
 
             await _userRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

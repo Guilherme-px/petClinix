@@ -33,7 +33,7 @@ public sealed class UpdateAccountCommandHandler : ICommandHandler<UpdateAccountC
 
         try
         {
-            user.UpdatePersonalInfo(command.UserName, command.UserPhoneNumber, command.UserBirthDate);
+            user.UpdatePersonalInfo(command.UserName, command.UserPhoneNumber, command.UserBirthDate, command.UserId);
             clinic.UpdateInfo(
                 command.ClinicTradeName, command.ClinicLegalName, command.ClinicDocumentNumber,
                 command.ClinicEmail, command.ClinicPhoneNumber,

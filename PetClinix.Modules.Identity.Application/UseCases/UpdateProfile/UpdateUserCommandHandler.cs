@@ -26,7 +26,7 @@ public sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand
 
         try
         {
-            user.UpdatePersonalInfo(command.Name, command.PhoneNumber, command.BirthDate);
+            user.UpdatePersonalInfo(command.Name, command.PhoneNumber, command.BirthDate, command.UpdatedByUserId);
             await _userRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();

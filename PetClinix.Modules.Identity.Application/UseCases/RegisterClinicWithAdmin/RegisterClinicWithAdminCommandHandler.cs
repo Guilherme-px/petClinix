@@ -75,6 +75,7 @@ public sealed class RegisterClinicWithAdminCommandHandler
 
             var adminUser = User.CreateAdmin(
                 clinic.Id,
+                Guid.Empty,
                 command.AdminName,
                 command.AdminEmail,
                 null,

@@ -121,7 +121,7 @@ public class UsersController : ControllerBase
             return Unauthorized(new { message = "Token inválido ou sem ID do usuário." });
         }
 
-        var command = new UpdateUserCommand(userId, request.Name, request.PhoneNumber, request.BirthDate);
+        var command = new UpdateUserCommand(userId, userId, request.Name, request.PhoneNumber, request.BirthDate);
         var result = await _updateUserHandler.Handle(command, cancellationToken);
 
         if (result.IsFailure)

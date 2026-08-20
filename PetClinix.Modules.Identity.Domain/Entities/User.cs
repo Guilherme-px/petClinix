@@ -20,10 +20,13 @@ public sealed class User : AggregateRoot
     public string? PasswordResetToken { get; private set; }
     public DateTime? PasswordResetTokenExpiresAtUtc { get; private set; }
     public string? RefreshToken { get; private set; }
+    public Guid CreatedByUserId { get; private set; }
+    public Guid? UpdatedByUserId { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
     public DateTime? RefreshTokenExpiresAtUtc { get; private set; }
 
     private User(
-        Guid clinicId, string name, Email email, string? passwordHash,
+        Guid clinicId, Guid createdByUserId, string name, Email email, string? passwordHash,
         string documentNumber, PhoneNumber phoneNumber, DateOnly birthDate, UserRole role)
     {
         if (clinicId == Guid.Empty)
@@ -35,6 +38,7 @@ public sealed class User : AggregateRoot
 
         Id = Guid.NewGuid();
         ClinicId = clinicId;
+        CreatedByUserId = createdByUserId;
         Name = name.Trim();
         Email = email;
         PasswordHash = passwordHash;
@@ -47,38 +51,27 @@ public sealed class User : AggregateRoot
     }
 
     public static User CreateAdmin(
-        Guid clinicId, string name, string email, string? passwordHash,
+        Guid clinicId, Guid createdByUserId, string name, string email, string? passwordHash,
         string documentNumber, string phoneNumber, DateOnly birthDate)
     {
         return new User(
-            clinicId, name, Email.Create(email), passwordHash,
-            documentNumber, PhoneNumber.Create(phoneNumber), birthDate, UserRole.Admin);
+            clinicId, createdByUserId, name, Email.Create(email), passwordHash,
+            documentNumber, PhoneNumber.Create(phoneNumber), birthDate, UserRole.Admin
+        );
     }
 
     public static User CreateStaff(
-        Guid clinicId,
-        string name,
-        string email,
-        string? passwordHash,
-        string documentNumber,
-        string phoneNumber,
-        DateOnly birthDate,
-        UserRole role)
+        Guid clinicId, Guid createdByUserId, string name, string email, string? passwordHash,
+        string documentNumber, string phoneNumber, DateOnly birthDate, UserRole role)
     {
         if (role == UserRole.Admin)
             throw new IdentityDomainException(
                 "identity.user.invalid_staff_role",
                 "Use a criação de administrador para cadastrar um usuário administrador.");
 
-        return new User(
-            clinicId,
-            name,
-            Email.Create(email),
-            passwordHash,
-            documentNumber,
-            PhoneNumber.Create(phoneNumber),
-            birthDate,
-            role);
+        return new User(clinicId, createdByUserId, name, Email.Create(email), passwordHash,
+            documentNumber, PhoneNumber.Create(phoneNumber), birthDate, role
+        );
     }
 
     public void Deactivate()
@@ -142,7 +135,7 @@ public sealed class User : AggregateRoot
                RefreshTokenExpiresAtUtc > DateTime.UtcNow;
     }
 
-    public void UpdatePersonalInfo(string name, string phoneNumber, DateOnly birthDate)
+    public void UpdatePersonalInfo(string name, string phoneNumber, DateOnly birthDate, Guid updatedByUserId)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new IdentityDomainException("identity.user.name_required", "O nome do usuário é obrigatório.");
@@ -150,9 +143,11 @@ public sealed class User : AggregateRoot
         Name = name.Trim();
         PhoneNumber = PhoneNumber.Create(phoneNumber);
         BirthDate = birthDate;
+        UpdatedByUserId = updatedByUserId;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
-    public void UpdateStaffInfo(string name, string phoneNumber, DateOnly birthDate, UserRole role)
+    public void UpdateStaffInfo(string name, string phoneNumber, DateOnly birthDate, UserRole role, Guid updatedByUserId)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new IdentityDomainException("identity.user.name_required", "O nome do usuário é obrigatório.");
@@ -161,5 +156,7 @@ public sealed class User : AggregateRoot
         PhoneNumber = PhoneNumber.Create(phoneNumber);
         BirthDate = birthDate;
         Role = role;
+        UpdatedByUserId = updatedByUserId;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 }
