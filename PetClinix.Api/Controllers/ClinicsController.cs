@@ -16,7 +16,7 @@ namespace PetClinix.Api.Controllers;
 public class ClinicsController : ControllerBase
 {
     private readonly ICommandHandler<UpdateClinicCommand, Result> _updateClinicHandler;
-    private readonly ICommandHandler<RegisterStaffCommand, Result> _registerStaffHandler;
+    private readonly ICommandHandler<RegisterStaffCommand, Result<RegisterStaffResponse>> _registerStaffHandler;
     private readonly ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> _getStaffHandler;
     private readonly ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> _getStaffByIdHandler;
     private readonly ICommandHandler<UpdateStaffCommand, Result> _updateStaffHandler;
@@ -24,7 +24,7 @@ public class ClinicsController : ControllerBase
 
     public ClinicsController(
         ICommandHandler<UpdateClinicCommand, Result> updateClinicHandler,
-        ICommandHandler<RegisterStaffCommand, Result> registerStaffHandler,
+        ICommandHandler<RegisterStaffCommand, Result<RegisterStaffResponse>> registerStaffHandler,
         ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>> getStaffHandler,
         ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>> getStaffByIdHandler,
         ICommandHandler<UpdateStaffCommand, Result> updateStaffHandler,
@@ -96,7 +96,7 @@ public class ClinicsController : ControllerBase
             return BadRequest(new { result.ErrorCode, result.ErrorMessage });
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
     [Authorize(Roles = "Admin")]

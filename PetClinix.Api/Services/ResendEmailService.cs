@@ -19,11 +19,17 @@ public class ResendEmailService : IEmailService
         _devOverrideEmail = configuration["Resend:DevOverrideEmail"];
     }
 
-    public async Task SendWelcomeEmailAsync(string toEmail, string userName, string passwordResetToken, CancellationToken cancellationToken = default)
+    public async Task<string?> SendWelcomeEmailAsync(string toEmail, string userName, string passwordResetToken, CancellationToken cancellationToken = default)
     {
-        var resetLink = $"http://localhost:5173/define-senha?token={passwordResetToken}";
+        bool isDevOverrideTarget =
+            !string.IsNullOrEmpty(_devOverrideEmail) &&
+            toEmail.Equals(_devOverrideEmail, StringComparison.OrdinalIgnoreCase);
 
-        var htmlContent = $@"
+        if (isDevOverrideTarget)
+        {
+            var resetLink = $"http://localhost:5173/define-senha?token={passwordResetToken}";
+
+            var htmlContent = $@"
             <h1>Bem-vindo ao PetClinix, {userName}!</h1>
             <p>Sua conta foi criada com sucesso. Sua clínica já está pronta para uso.</p>
             <p>Para acessar o sistema, você precisa definir sua senha de acesso através do link abaixo:</p>
@@ -32,37 +38,43 @@ public class ResendEmailService : IEmailService
             <br>
             <p>Equipe PetClinix.</p>";
 
-        var actualToEmail = !string.IsNullOrEmpty(_devOverrideEmail) ? _devOverrideEmail : toEmail;
+            var actualToEmail = !string.IsNullOrEmpty(_devOverrideEmail) ? _devOverrideEmail : toEmail;
 
-        if (!string.IsNullOrEmpty(_devOverrideEmail) && _devOverrideEmail != toEmail)
-        {
-            _logger.LogWarning("⚠️ AMBIENTE DEV: E-mail original era {Original}, mas será enviado para {Override}", toEmail, _devOverrideEmail);
-        }
-
-        var message = new EmailMessage
-        {
-            From = _fromEmail,
-            To = new EmailAddressList { actualToEmail },
-            Subject = "Bem-vindo ao PetClinix! Defina sua senha de acesso",
-            HtmlBody = htmlContent
-        };
-
-        try
-        {
-            var response = await _client.EmailSendAsync(message, cancellationToken);
-
-            if (response.Content != Guid.Empty)
+            if (!string.IsNullOrEmpty(_devOverrideEmail) && _devOverrideEmail != toEmail)
             {
-                _logger.LogInformation("✅ E-mail de boas-vindas enviado com sucesso via Resend. ID: {Id}", response.Content);
+                _logger.LogWarning("⚠️ AMBIENTE DEV: E-mail original era {Original}, mas será enviado para {Override}", toEmail, _devOverrideEmail);
             }
-            else
+
+            var message = new EmailMessage
             {
-                _logger.LogWarning("Resend retornou um ID vazio ao tentar enviar.");
+                From = _fromEmail,
+                To = new EmailAddressList { actualToEmail },
+                Subject = "Bem-vindo ao PetClinix! Defina sua senha de acesso",
+                HtmlBody = htmlContent
+            };
+
+            try
+            {
+                var response = await _client.EmailSendAsync(message, cancellationToken);
+
+                if (response.Content != Guid.Empty)
+                {
+                    _logger.LogInformation("✅ E-mail de boas-vindas enviado com sucesso via Resend. ID: {Id}", response.Content);
+                }
+                else
+                {
+                    _logger.LogWarning("Resend retornou um ID vazio ao tentar enviar.");
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exceção ao tentar enviar e-mail via Resend.");
+            }
+
+            return null;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Exceção ao tentar enviar e-mail via Resend.");
-        }
+
+        _logger.LogInformation("📧 DEMO MODE: E-mail não enviado para {Email}. Token retornado na resposta da API.", toEmail);
+        return passwordResetToken;
     }
 }

@@ -46,7 +46,8 @@ public class IdentityController : ControllerBase
             return BadRequest(new { result.ErrorCode, result.ErrorMessage });
         }
 
-        return Created("api/clinics", result.Value);
+        // return Created("api/clinics", result.Value);
+        return CreatedAtAction(nameof(RegisterClinic), new { id = result.Value!.ClinicId }, result.Value!);
     }
 }
 

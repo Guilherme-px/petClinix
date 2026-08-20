@@ -7,7 +7,7 @@ using PetClinix.Modules.Identity.Domain.ValueObjects;
 
 namespace PetClinix.Modules.Identity.Application.UseCases.RegisterStaff;
 
-public sealed class RegisterStaffCommandHandler : ICommandHandler<RegisterStaffCommand, Result>
+public sealed class RegisterStaffCommandHandler : ICommandHandler<RegisterStaffCommand, Result<RegisterStaffResponse>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -26,21 +26,21 @@ public sealed class RegisterStaffCommandHandler : ICommandHandler<RegisterStaffC
         _emailService = emailService;
     }
 
-    public async Task<Result> Handle(RegisterStaffCommand command, CancellationToken cancellationToken)
+    public async Task<Result<RegisterStaffResponse>> Handle(RegisterStaffCommand command, CancellationToken cancellationToken)
     {
         var staffLimit = await _subscriptionStatusService.GetStaffLimitAsync(command.ClinicId, cancellationToken);
         var currentStaffCount = await _userRepository.CountByClinicIdAsync(command.ClinicId, cancellationToken);
 
         if (currentStaffCount >= staffLimit)
         {
-            return Result.Failure("identity.staff_limit_reached", "O limite de funcionários do seu plano foi atingido. Faça um upgrade para adicionar mais.");
+            return Result<RegisterStaffResponse>.Failure("identity.staff_limit_reached", "O limite de funcionários do seu plano foi atingido. Faça um upgrade para adicionar mais.");
         }
 
         var emailVo = Email.Create(command.Email);
 
         if (await _userRepository.ExistsByEmailAsync(emailVo, cancellationToken))
         {
-            return Result.Failure("identity.user.email_already_exists", "Já existe um usuário com esse e-mail.");
+            return Result<RegisterStaffResponse>.Failure("identity.user.email_already_exists", "Já existe um usuário com esse e-mail.");
         }
 
         try
@@ -61,14 +61,13 @@ public sealed class RegisterStaffCommandHandler : ICommandHandler<RegisterStaffC
 
             await _userRepository.AddAsync(staffUser, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+            var returnedToken = await _emailService.SendWelcomeEmailAsync(staffUser.Email.Value, staffUser.Name, token, cancellationToken);
 
-            await _emailService.SendWelcomeEmailAsync(staffUser.Email.Value, staffUser.Name, token, cancellationToken);
-
-            return Result.Success();
+            return Result<RegisterStaffResponse>.Success(new RegisterStaffResponse(staffUser.Id, returnedToken));
         }
         catch (IdentityDomainException ex)
         {
-            return Result.Failure(ex.Code, ex.Message);
+            return Result<RegisterStaffResponse>.Failure(ex.Code, ex.Message);
         }
     }
 }

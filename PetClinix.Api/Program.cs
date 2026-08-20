@@ -124,7 +124,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateAccountCommand, Result>, Update
 builder.Services.AddScoped<ICommandHandler<CreatePortalSessionCommand, Result<CreatePortalSessionResponse>>, CreatePortalSessionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelSubscriptionCommand, Result>, CancelSubscriptionCommandHandler>();
 builder.Services.AddScoped<ISubscriptionStatusService, SubscriptionStatusService>();
-builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result>, RegisterStaffCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<RegisterStaffCommand, Result<RegisterStaffResponse>>, RegisterStaffCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffQuery, Result<PagedResult<StaffResponse>>>, GetStaffQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<GetStaffByIdQuery, Result<StaffResponse>>, GetStaffByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateStaffCommand, Result>, UpdateStaffCommandHandler>();
@@ -226,11 +226,11 @@ var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-// if (app.Environment.IsDevelopment())
-// {
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI();
-// }
+}
 
 app.UseHttpsRedirection();
 app.UseCors("VueFrontend");
