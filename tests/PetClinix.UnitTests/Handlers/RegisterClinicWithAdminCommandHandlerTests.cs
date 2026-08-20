@@ -16,6 +16,7 @@ public class RegisterClinicWithAdminCommandHandlerTests
     private readonly IUserRepository _userRepositoryMock;
     private readonly IPasswordHasher _passwordHasherMock;
     private readonly RegisterClinicWithAdminCommandHandler _handler;
+    private readonly IEmailService _emailServiceMock;
     private readonly IUnitOfWork _unitOfWorkMock;
 
     public RegisterClinicWithAdminCommandHandlerTests()
@@ -24,12 +25,14 @@ public class RegisterClinicWithAdminCommandHandlerTests
         _userRepositoryMock = Substitute.For<IUserRepository>();
         _passwordHasherMock = Substitute.For<IPasswordHasher>();
         _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _emailServiceMock = Substitute.For<IEmailService>();
 
         _handler = new RegisterClinicWithAdminCommandHandler(
             _clinicRepositoryMock,
             _userRepositoryMock,
             _passwordHasherMock,
-            _unitOfWorkMock);
+            _unitOfWorkMock,
+            _emailServiceMock);
     }
 
     private static RegisterClinicWithAdminCommand CreateValidCommand() => new()

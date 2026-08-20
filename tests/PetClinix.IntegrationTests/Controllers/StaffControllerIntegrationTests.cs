@@ -91,10 +91,10 @@ public class StaffControllerIntegrationTests : IClassFixture<CustomWebApplicatio
     public async Task RegisterStaff_Should_Return_204_And_Create_User_When_Valid()
     {
         var (email, password) = await SetupAdminWithSubscriptionAsync();
-
         var loginRequest = new { Email = email, Password = password };
         var loginResponse = await _client.PostAsJsonAsync("/api/users/login", loginRequest);
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginResult!.Token);
 
         var staffEmail = $"vet_{Guid.NewGuid()}@teste.com";
@@ -110,7 +110,7 @@ public class StaffControllerIntegrationTests : IClassFixture<CustomWebApplicatio
 
         var response = await _client.PostAsJsonAsync("/api/clinics/me/staff", staffRequest);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var scope = _factory.Services.CreateScope();
         var identityDb = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();

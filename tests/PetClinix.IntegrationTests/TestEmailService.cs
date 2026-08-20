@@ -4,8 +4,8 @@ namespace PetClinix.IntegrationTests;
 
 public class TestEmailService : IEmailService
 {
-    public Task SendWelcomeEmailAsync(string toEmail, string userName, string passwordResetToken, CancellationToken cancellationToken = default)
+    public Task<string?> SendWelcomeEmailAsync(string toEmail, string userName, string passwordResetToken, CancellationToken cancellationToken = default)
     {
-        return Task.CompletedTask;
+        return Task.FromResult<string?>(null);
     }
 }
