@@ -1,4 +1,4 @@
-[🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md)
+[🇧🇷 Português](README.pt-br.md) | [🇺🇸 English](README.md) | [🧭 Guia de Testes](GUIDE.pt-br.md)
 
 # PetClinix
 
