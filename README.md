@@ -2,6 +2,9 @@
 
 # PetClinix
 
+**🔗 Live Demo:** [https://petclinix.onrender.com/swagger/index.html](https://petclinix.onrender.com/swagger/index.html)
+*(Note: The free tier on Render may take ~50 seconds to wake up if inactive)*
+
 PetClinix is a multi-tenant SaaS MVP for veterinary clinics, designed and implemented as a public portfolio project to demonstrate senior-level software engineering practices, product thinking, and architectural decision-making.
 
 This repository intentionally represents the **public MVP stage** of the product.  
@@ -50,7 +53,6 @@ The public MVP is intended to cover the core foundations and essential workflows
 - tutor registration
 - schedule management
 - services management
-- vaccine tracking
 
 This scope is intentionally broad enough to represent a realistic vertical slice of the product, while still being limited to an MVP that is suitable for public demonstration.
 
@@ -95,25 +97,35 @@ The solution follows the principles of:
 ### Current project structure
 
 ```text
-├── PetClinix.Api/                              # Presentation layer (Controllers, Middleware, DI)
-├── PetClinix.BuildingBlocks.Application/       # Base contracts (CQRS interfaces, Result pattern)
-├── PetClinix.BuildingBlocks.Domain/            # Base domain contracts (Entity, AggregateRoot, DomainEvents)
-├── PetClinix.BuildingBlocks.Infrastructure/    # Base infrastructure contracts
-├── PetClinix.Modules.Billing.Application/      # Billing use cases (Stripe Checkout)
-├── PetClinix.Modules.Billing.Domain/           # Billing business logic (Subscription entity)
-├── PetClinix.Modules.Billing.Infrastructure/   # Billing persistence & Stripe integration
-├── PetClinix.Modules.Identity.Application/     # Identity use cases (Auth, Users)
-├── PetClinix.Modules.Identity.Domain/          # Identity business logic (Entities, Value Objects)
-└── PetClinix.Modules.Identity.Infrastructure/  # Identity persistence (EF Core, Repositories)
+├── PetClinix.Api/                                  # Presentation layer (Controllers, Middleware, DI)
+├── PetClinix.BuildingBlocks.Application/           # Base contracts (CQRS interfaces, Result pattern)
+├── PetClinix.BuildingBlocks.Domain/                # Base domain contracts (Entity, AggregateRoot, DomainEvents)
+├── PetClinix.BuildingBlocks.Infrastructure/        # Base infrastructure contracts
+├── PetClinix.Modules.Appointments.Application/     # Appointments use cases (Scheduling, Slots)
+├── PetClinix.Modules.Appointments.Domain/          # Appointments business logic (Appointment entity)
+├── PetClinix.Modules.Appointments.Infrastructure/  # Appointments persistence
+├── PetClinix.Modules.Billing.Application/          # Billing use cases (Stripe Checkout)
+├── PetClinix.Modules.Billing.Domain/               # Billing business logic (Subscription entity)
+├── PetClinix.Modules.Billing.Infrastructure/       # Billing persistence & Stripe integration
+├── PetClinix.Modules.Catalog.Application/          # Catalog use cases (Services)
+├── PetClinix.Modules.Catalog.Domain/               # Catalog business logic (Service entity)
+├── PetClinix.Modules.Catalog.Infrastructure/       # Catalog persistence
+├── PetClinix.Modules.Identity.Application/         # Identity use cases (Auth, Users)
+├── PetClinix.Modules.Identity.Domain/              # Identity business logic (Entities, Value Objects)
+├── PetClinix.Modules.Identity.Infrastructure/      # Identity persistence (EF Core, Repositories)
+├── PetClinix.Modules.Pets.Application/             # Pets use cases (Tutors, Pets)
+├── PetClinix.Modules.Pets.Domain/                  # Pets business logic
+└── PetClinix.Modules.Pets.Infrastructure/          # Pets persistence
 tests/
-├── PetClinix.UnitTests/                        # Fast, isolated tests using NSubstitute and FluentAssertions
-└── PetClinix.IntegrationTests/                 # E2E API tests using WebApplicationFactory and Testcontainers
+├── PetClinix.UnitTests/                            # Fast, isolated tests using NSubstitute and FluentAssertions
+└── PetClinix.IntegrationTests/                     # E2E API tests using WebApplicationFactory and Testcontainers
 ```
+
 ---
 
 ## Tech Stack
 
-- **Framework:** .NET 10 (Preview)
+- **Framework:** .NET 10
 - **Architecture:** Modular Monolith, Clean Architecture, DDD
 - **Database:** PostgreSQL
 - **ORM:** Entity Framework Core 9
@@ -123,6 +135,7 @@ tests/
 - **Payments:** Stripe API (Checkout & Webhooks)
 - **Security:** JWT Authentication, Refresh Tokens, Role-Based Access Control (RBAC), Rate Limiting, CORS
 - **Emails:** Resend API (Welcome & Password Reset flows)
+- **Infrastructure:** Docker, Docker Compose
 
 ---
 
@@ -130,29 +143,27 @@ tests/
 
 Before you begin, ensure you have the following installed on your machine:
 
-1. **.NET 10 SDK (Preview)**
+1. **.NET 10 SDK**
    - Required to build and run the application.
    - Download: [https://dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-2. **PostgreSQL**
-   - Required to run the application database locally.
-   - You can install it natively or run it via Docker:
+2. **Docker & Docker Compose**
+   - Used to run the PostgreSQL database locally for development.
+   - The project includes a `docker-compose.yml` file. Create a `.env` file in the root (copy from `.env.example`) with your local DB credentials, then run:
      ```bash
-     docker run --name petclinix-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16-alpine
+     docker-compose up -d
      ```
-
-3. **Docker**
    - **Strictly required to run the Integration Tests.** The integration tests use `Testcontainers` to spin up a real, ephemeral PostgreSQL database inside a Docker container automatically.
    - Download: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
 
-4. **Entity Framework Core Tools**
-   - Required to create and apply database migrations.
+3. **Entity Framework Core Tools**
+   - Required to create and apply database migrations manually.
    - Install globally by running:
      ```bash
      dotnet tool install --global dotnet-ef
      ```
 
-5. **Stripe CLI**
+4. **Stripe CLI**
    - Required to test the subscription payment flow and webhooks locally.
    - Installation guide: [https://stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
 
@@ -175,12 +186,12 @@ cd PetClinix
 ### 2. Configure the Database Connection
 The application uses a layered configuration approach. The base template is in `appsettings.json`, but your local credentials should be placed in `appsettings.Development.json` (which is ignored by Git).
 
-Create the file `PetClinix.Api/appsettings.Development.json` and add your connection string:
+Create the file `PetClinix.Api/appsettings.Development.json` and add your connection string. Ensure the credentials match your `.env` file used by Docker Compose:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=postgres;Password=your_password_here"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=petclinix_db;Username=petclinix_dev;Password=YourPassowrd@123"
   },
   "Stripe": {
     "SecretKey": "sk_test_YOUR_STRIPE_SECRET_KEY",
@@ -193,26 +204,22 @@ Create the file `PetClinix.Api/appsettings.Development.json` and add your connec
     "ExpiryMinutes": 60
   },
    "Resend": {
-    "ApiKey": "re_YOUR_RESEND_API_KEY"
+    "ApiKey": "re_YOUR_RESEND_API_KEY",
+    "DevOverrideEmail": "YOUR_RESEND_EMAI"
   }
 }
 ```
 
-### 3. Apply Database Migrations
-To create the database schema, run the following command from the root directory:
-
-```bash
-dotnet ef database update --project PetClinix.Modules.Identity.Infrastructure --startup-project PetClinix.Api
-```
-
-### 4. Run the Application
+### 3. Run the Application
 ```bash
 dotnet run --project PetClinix.Api
 ```
+*(Note: The API is configured to automatically apply database migrations on startup, creating all necessary tables. Manual migration commands are not required for local development).*
+
 Once running, open your browser and navigate to the Swagger UI to test the API endpoints:
 - **Swagger UI:** `http://localhost:<port>/swagger` (check your terminal output for the exact port, usually `5180` or `5000`).
 
-### 5. Setup Stripe Webhooks (Local Development)
+### 4. Setup Stripe Webhooks (Local Development)
 To test the payment flow locally, you need to forward Stripe webhook events to your local API.
 
 1. Log in to your Stripe account via CLI:
@@ -262,17 +269,18 @@ dotnet test tests/PetClinix.IntegrationTests
 - [x] PostgreSQL integration with EF Core
 - [x] Stripe subscription checkout flow
 - [x] Webhook handling for payment success
-- [x] Identity module: Password definition & Login (JWT)
+- [x] Identity module: Password definition, Login & Refresh Token (JWT)
 - [x] API Hardening: Rate Limiting, CORS & Global Exception Handling
 - [x] Atomic Database Operations (Unit of Work pattern)
 - [x] Comprehensive Testing Suite (Unit tests with NSubstitute & E2E Integration tests with Testcontainers)
 - [x] Protected Routes & Role-based Authorization (RBAC)
 - [x] Stripe Billing Portal & Subscription Cancellation Handling
 - [x] Email Integration (Resend) for Welcome & Password Reset
-- [x] Employee management module
-- [x] Pet & Tutor registration module
+- [x] Employee management module (CRUD, Plan Limits, Soft Delete)
+- [x] Pet & Tutor registration module (CRUD, Multi-tenant isolation, Audit tracking)
 - [x] Services & Catalog module (CRUD, Multi-tenant isolation, Audit tracking)
 - [x] Scheduling module (Appointments, Double Booking prevention, Available Slots algorithm, Lifecycle status management)
+- [x] Cross-module Referential Integrity (Safe Deletion checks)
 
 ---
 
