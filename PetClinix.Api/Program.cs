@@ -11,7 +11,7 @@ using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Application.UseCases.CreateCheckoutSession;
 using PetClinix.Modules.Billing.Application.UseCases.CreatePortalSession;
 using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
-using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using PetClinix.Modules.Billing.Infrastructure.Repositories;
 using PetClinix.Modules.Billing.Infrastructure.Services;
@@ -243,7 +243,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try 
+    try
     {
         var identityDb = services.GetRequiredService<IdentityDbContext>();
         identityDb.Database.Migrate();

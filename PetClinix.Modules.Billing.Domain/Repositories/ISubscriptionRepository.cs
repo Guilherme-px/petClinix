@@ -1,6 +1,6 @@
 using PetClinix.Modules.Billing.Domain.Entities;
 
-namespace PetClinix.Modules.Billing.Domain.Interfaces;
+namespace PetClinix.Modules.Billing.Domain.Repositories;
 
 public interface ISubscriptionRepository
 {

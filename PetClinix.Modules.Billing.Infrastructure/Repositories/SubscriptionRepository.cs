@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PetClinix.Modules.Billing.Domain.Entities;
-using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 
 namespace PetClinix.Modules.Billing.Infrastructure.Repositories;

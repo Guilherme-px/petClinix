@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PetClinix.Modules.Billing.Domain.Entities;
-using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Billing.Domain.Enums;
 using PetClinix.Modules.Billing.Infrastructure.Persistence;
 using Xunit;
@@ -27,7 +27,7 @@ public class SubscriptionRepositoryIntegrationTests : IClassFixture<CustomWebApp
 
         var clinicId = Guid.NewGuid();
         var subscription = Subscription.Create(clinicId, "cus_integration_1", "sub_integration_1", PlanTier.Basic);
-        
+
         await repository.AddAsync(subscription);
 
         var savedSubscription = await context.Subscriptions.FirstOrDefaultAsync(s => s.ClinicId == clinicId);

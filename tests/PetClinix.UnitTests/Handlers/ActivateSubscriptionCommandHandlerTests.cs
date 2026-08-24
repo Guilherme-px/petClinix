@@ -2,7 +2,7 @@ using FluentAssertions;
 using NSubstitute;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Domain.Entities;
-using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Billing.Domain.Enums;
 using Xunit;
 

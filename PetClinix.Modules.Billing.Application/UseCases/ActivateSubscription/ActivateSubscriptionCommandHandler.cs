@@ -1,6 +1,6 @@
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Domain.Entities;
-using PetClinix.Modules.Billing.Domain.Interfaces;
+using PetClinix.Modules.Billing.Domain.Repositories;
 
 namespace PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 
