@@ -2,6 +2,7 @@ using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Appointments.Application.Contracts;
 using PetClinix.Modules.Appointments.Domain.Exceptions;
 using PetClinix.Modules.Appointments.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace PetClinix.Modules.Appointments.Application.UseCases.UpdateAppointment;
 
@@ -56,6 +57,10 @@ public sealed class UpdateAppointmentCommandHandler : ICommandHandler<UpdateAppo
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Failure("appointments.appt.conflict", "Este agendamento foi modificado por outro usuário. Recarregue os dados e tente novamente.");
         }
         catch (AppointmentsDomainException ex)
         {

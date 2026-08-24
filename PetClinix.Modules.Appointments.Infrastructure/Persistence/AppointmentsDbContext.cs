@@ -26,6 +26,7 @@ public class AppointmentsDbContext : DbContext
             entity.Property(a => a.Status).IsRequired();
             entity.Property(a => a.Notes).HasMaxLength(1000);
             entity.Property(a => a.CreatedByUserId).IsRequired();
+            entity.Property(a => a.RowVersion).IsRowVersion();
         });
     }
 }

@@ -18,6 +18,7 @@ public sealed class Appointment : AggregateRoot
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? UpdatedAtUtc { get; private set; }
     public Guid? UpdatedByUserId { get; private set; }
+    public byte[] RowVersion { get; private set; }
 
 #pragma warning disable CS8618
     private Appointment() { }
