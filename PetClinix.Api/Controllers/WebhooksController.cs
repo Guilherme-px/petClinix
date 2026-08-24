@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
+using PetClinix.Modules.Billing.Domain.Entities;
+using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.ValueObjects;
 using Stripe;
@@ -20,6 +22,7 @@ public class WebhooksController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly IWebhookEventRepository _webhookEventRepository;
     private readonly ILogger<WebhooksController> _logger;
 
     public WebhooksController(
@@ -29,6 +32,7 @@ public class WebhooksController : ControllerBase
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IEmailService emailService,
+        IWebhookEventRepository webhookEventRepository,
         ILogger<WebhooksController> logger)
     {
         _configuration = configuration;
@@ -37,6 +41,7 @@ public class WebhooksController : ControllerBase
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _webhookEventRepository = webhookEventRepository;
         _logger = logger;
     }
 
@@ -58,6 +63,19 @@ public class WebhooksController : ControllerBase
             _logger.LogError(e, "Erro ao validar assinatura do webhook do Stripe.");
             return BadRequest(new { error = "Invalid signature" });
         }
+
+        var stripeEventId = stripeEvent.Id;
+        var alreadyProcessed = await _webhookEventRepository.ExistsByStripeEventIdAsync(stripeEventId, HttpContext.RequestAborted);
+
+        if (alreadyProcessed)
+        {
+            _logger.LogInformation("Webhook {EventId} já foi processado anteriormente. Ignorando.", stripeEventId);
+            return Ok();
+        }
+
+        var webhookEvent = WebhookEvent.Create(stripeEventId);
+        await _webhookEventRepository.AddAsync(webhookEvent, HttpContext.RequestAborted);
+        await _unitOfWork.SaveChangesAsync(HttpContext.RequestAborted);
 
         if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
         {
