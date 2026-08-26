@@ -158,6 +158,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateAppointmentCommand, Result>, Up
 builder.Services.AddScoped<ICommandHandler<UpdateAppointmentStatusCommand, Result>, UpdateAppointmentStatusCommandHandler>();
 builder.Services.AddScoped<IPetDependencyChecker, PetClinix.Modules.Pets.Infrastructure.Services.PetDependencyChecker>();
 builder.Services.AddScoped<IAppointmentDependencyChecker, AppointmentDependencyChecker>();
+builder.Services.AddScoped<PetClinix.Modules.Billing.Application.Contracts.IBillingUnitOfWork, PetClinix.Modules.Billing.Infrastructure.Persistence.BillingUnitOfWork>();
 
 builder.Services.AddSingleton<IClinicScheduleService>(new MockClinicScheduleService());
 

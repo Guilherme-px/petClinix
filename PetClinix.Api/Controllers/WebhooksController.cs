@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using PetClinix.BuildingBlocks.Application;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
 using PetClinix.Modules.Billing.Application.UseCases.CancelSubscription;
+using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Domain.Entities;
 using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Identity.Domain.Repositories;
@@ -21,6 +22,7 @@ public class WebhooksController : ControllerBase
     private readonly ICommandHandler<CancelSubscriptionCommand, Result> _cancelHandler;
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IBillingUnitOfWork _billingUnitOfWork;
     private readonly IEmailService _emailService;
     private readonly IWebhookEventRepository _webhookEventRepository;
     private readonly ILogger<WebhooksController> _logger;
@@ -30,7 +32,8 @@ public class WebhooksController : ControllerBase
         ICommandHandler<ActivateSubscriptionCommand, Result> activateHandler,
         ICommandHandler<CancelSubscriptionCommand, Result> cancelHandler,
         IUserRepository userRepository,
-        IUnitOfWork unitOfWork,
+        IUnitOfWork identityUnitOfWork,
+        IBillingUnitOfWork billingUnitOfWork,
         IEmailService emailService,
         IWebhookEventRepository webhookEventRepository,
         ILogger<WebhooksController> logger)
@@ -39,7 +42,8 @@ public class WebhooksController : ControllerBase
         _activateHandler = activateHandler;
         _cancelHandler = cancelHandler;
         _userRepository = userRepository;
-        _unitOfWork = unitOfWork;
+        _unitOfWork = identityUnitOfWork;
+        _billingUnitOfWork = billingUnitOfWork;
         _emailService = emailService;
         _webhookEventRepository = webhookEventRepository;
         _logger = logger;
@@ -75,7 +79,7 @@ public class WebhooksController : ControllerBase
 
         var webhookEvent = WebhookEvent.Create(stripeEventId);
         await _webhookEventRepository.AddAsync(webhookEvent, HttpContext.RequestAborted);
-        await _unitOfWork.SaveChangesAsync(HttpContext.RequestAborted);
+        await _billingUnitOfWork.SaveChangesAsync(HttpContext.RequestAborted);
 
         if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
         {
