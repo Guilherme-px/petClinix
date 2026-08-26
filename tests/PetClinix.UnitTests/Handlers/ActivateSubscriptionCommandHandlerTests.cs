@@ -1,6 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
 using PetClinix.Modules.Billing.Application.UseCases.ActivateSubscription;
+using PetClinix.Modules.Billing.Application.Contracts;
 using PetClinix.Modules.Billing.Domain.Entities;
 using PetClinix.Modules.Billing.Domain.Repositories;
 using PetClinix.Modules.Billing.Domain.Enums;
@@ -12,11 +13,13 @@ public class ActivateSubscriptionCommandHandlerTests
 {
     private readonly ISubscriptionRepository _subscriptionRepositoryMock;
     private readonly ActivateSubscriptionCommandHandler _handler;
+    private readonly IBillingUnitOfWork _billingUnitOfWorkMock;
 
     public ActivateSubscriptionCommandHandlerTests()
     {
         _subscriptionRepositoryMock = Substitute.For<ISubscriptionRepository>();
-        _handler = new ActivateSubscriptionCommandHandler(_subscriptionRepositoryMock);
+        _billingUnitOfWorkMock = Substitute.For<IBillingUnitOfWork>();
+        _handler = new ActivateSubscriptionCommandHandler(_subscriptionRepositoryMock, _billingUnitOfWorkMock);
     }
 
     private static ActivateSubscriptionCommand CreateValidCommand() => new(
